@@ -38,7 +38,8 @@ def poll_esp32_sensors():
                         db.add_sensor_data(
                             plant['id'],
                             data.get('soil_humidity'),
-                            data.get('temperature')
+                            data.get('temperature'),
+                            data.get('air_humidity')
                         )
                 except Exception:
                     pass  # ESP32 unreachable, skip this cycle
@@ -151,7 +152,8 @@ def api_receive_sensor_data():
     db.add_sensor_data(
         plant_id,
         data.get('soil_humidity'),
-        data.get('temperature')
+        data.get('temperature'),
+        data.get('air_humidity')
     )
     return jsonify({'message': 'Data recorded'}), 201
 

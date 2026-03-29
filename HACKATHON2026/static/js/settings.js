@@ -449,8 +449,8 @@ function openModal(plant = null) {
         document.getElementById('humidity-max').value = plant.ideal_soil_humidity_max;
         document.getElementById('temp-min').value = plant.ideal_temperature_min;
         document.getElementById('temp-max').value = plant.ideal_temperature_max;
-        document.getElementById('light-min').value = plant.ideal_light_min;
-        document.getElementById('light-max').value = plant.ideal_light_max;
+        document.getElementById('air-humidity-min').value = plant.ideal_air_humidity_min || 40;
+        document.getElementById('air-humidity-max').value = plant.ideal_air_humidity_max || 80;
         document.getElementById('water-duration').value = plant.water_duration;
     } else {
         title.textContent = 'Add Plant';
@@ -488,8 +488,8 @@ async function savePlant(e) {
         ideal_soil_humidity_max: parseFloat(document.getElementById('humidity-max').value),
         ideal_temperature_min: parseFloat(document.getElementById('temp-min').value),
         ideal_temperature_max: parseFloat(document.getElementById('temp-max').value),
-        ideal_light_min: parseFloat(document.getElementById('light-min').value),
-        ideal_light_max: parseFloat(document.getElementById('light-max').value),
+        ideal_air_humidity_min: parseFloat(document.getElementById('air-humidity-min').value),
+        ideal_air_humidity_max: parseFloat(document.getElementById('air-humidity-max').value),
         water_duration: parseInt(document.getElementById('water-duration').value)
     };
 

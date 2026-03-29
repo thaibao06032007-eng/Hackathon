@@ -218,7 +218,6 @@ void sendSensorData() {
     doc["soil_humidity"]  = round(lastSoilPercent * 10) / 10.0;
     doc["temperature"]    = round(lastTemperature * 10) / 10.0;
     doc["air_humidity"]   = round(lastAirHumidity * 10) / 10.0;
-    doc["light_level"]    = 0;  // No light sensor connected
 
     String json;
     serializeJson(doc, json);
@@ -285,7 +284,6 @@ void handleStatus() {
     doc["soil_raw"]       = (int)lastSoilRaw;
     doc["temperature"]    = lastTemperature;
     doc["air_humidity"]   = lastAirHumidity;
-    doc["light_level"]    = 0;
     doc["uptime_seconds"] = millis() / 1000;
     doc["wifi_rssi"]      = WiFi.RSSI();
     doc["free_heap"]      = ESP.getFreeHeap();

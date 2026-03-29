@@ -56,6 +56,7 @@ function createPlantCard(plant) {
 
     const humidity = data.soil_humidity != null ? `${data.soil_humidity.toFixed(1)}%` : '--';
     const temp = data.temperature != null ? `${data.temperature.toFixed(1)}\u00b0C` : '--';
+    const airHumidity = data.air_humidity != null ? `${data.air_humidity.toFixed(1)}%` : '--';
 
     const scoreCls = score >= 70 ? 'score-green' : score >= 40 ? 'score-yellow' : score !== '--' ? 'score-red' : 'score-gray';
 
@@ -81,6 +82,11 @@ function createPlantCard(plant) {
                     <span class="material-icons-outlined" style="color:#ef5350">thermostat</span>
                     <span class="dash-reading-val">${temp}</span>
                     <span class="dash-reading-lbl">Temp</span>
+                </div>
+                <div class="dash-reading">
+                    <span class="material-icons-outlined" style="color:#4fc3f7">humidity_mid</span>
+                    <span class="dash-reading-val">${airHumidity}</span>
+                    <span class="dash-reading-lbl">Air</span>
                 </div>
                 <div class="dash-reading">
                     <span class="dash-status-pill ${statusClass}">${escapeHtml(statusLabel)}</span>

@@ -80,6 +80,11 @@ function updateUI(plant) {
         const pct = Math.min(100, Math.max(0, ((data.temperature + 10) / 60) * 100));
         document.querySelector('#temp-bar .sensor-bar-fill').style.width = `${pct}%`;
     }
+    if (data.air_humidity != null) {
+        document.getElementById('air-humidity-value').textContent = `${data.air_humidity.toFixed(1)}%`;
+        const pct = Math.min(100, Math.max(0, data.air_humidity));
+        document.querySelector('#air-humidity-bar .sensor-bar-fill').style.width = `${pct}%`;
+    }
 
     // Health score — smooth animated counter + tree
     const scoreEl = document.getElementById('health-score');

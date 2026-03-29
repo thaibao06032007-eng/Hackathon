@@ -23,6 +23,8 @@ def init_db():
             ideal_soil_humidity_max REAL DEFAULT 70,
             ideal_temperature_min REAL DEFAULT 18,
             ideal_temperature_max REAL DEFAULT 30,
+            ideal_air_humidity_min REAL DEFAULT 40,
+            ideal_air_humidity_max REAL DEFAULT 80,
             water_duration INTEGER DEFAULT 5,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -32,6 +34,7 @@ def init_db():
             plant_id INTEGER NOT NULL,
             soil_humidity REAL,
             temperature REAL,
+            air_humidity REAL,
             recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (plant_id) REFERENCES plants(id) ON DELETE CASCADE
         );
@@ -71,8 +74,9 @@ def create_plant(data):
         INSERT INTO plants (name, species, location, esp32_ip,
             ideal_soil_humidity_min, ideal_soil_humidity_max,
             ideal_temperature_min, ideal_temperature_max,
+            ideal_air_humidity_min, ideal_air_humidity_max,
             water_duration)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         data['name'],
         data.get('species', ''),
@@ -82,6 +86,8 @@ def create_plant(data):
         data.get('ideal_soil_humidity_max', 70),
         data.get('ideal_temperature_min', 18),
         data.get('ideal_temperature_max', 30),
+        data.get('ideal_air_humidity_min', 40),
+        data.get('ideal_air_humidity_max', 80),
         data.get('water_duration', 5)
     ))
     conn.commit()
@@ -96,6 +102,7 @@ def update_plant(plant_id, data):
         UPDATE plants SET name=?, species=?, location=?, esp32_ip=?,
             ideal_soil_humidity_min=?, ideal_soil_humidity_max=?,
             ideal_temperature_min=?, ideal_temperature_max=?,
+            ideal_air_humidity_min=?, ideal_air_humidity_max=?,
             water_duration=?
         WHERE id=?
     ''', (
@@ -107,6 +114,8 @@ def update_plant(plant_id, data):
         data.get('ideal_soil_humidity_max', 70),
         data.get('ideal_temperature_min', 18),
         data.get('ideal_temperature_max', 30),
+        data.get('ideal_air_humidity_min', 40),
+        data.get('ideal_air_humidity_max', 80),
         data.get('water_duration', 5),
         plant_id
     ))
@@ -123,12 +132,12 @@ def delete_plant(plant_id):
 
 # ==================== Sensor Data ====================
 
-def add_sensor_data(plant_id, soil_humidity, temperature):
+def add_sensor_data(plant_id, soil_humidity, temperature, air_humidity=None):
     conn = get_db()
     conn.execute('''
-        INSERT INTO sensor_data (plant_id, soil_humidity, temperature)
-        VALUES (?, ?, ?)
-    ''', (plant_id, soil_humidity, temperature))
+        INSERT INTO sensor_data (plant_id, soil_humidity, temperature, air_humidity)
+        VALUES (?, ?, ?, ?)
+    ''', (plant_id, soil_humidity, temperature, air_humidity))
     conn.commit()
     conn.close()
 
@@ -216,6 +225,19 @@ def predict_health(plant_id):
             issues.append(
                 f"Too hot ({latest['temperature']:.1f}\u00b0C \u2014 max: {plant['ideal_temperature_max']}\u00b0C)")
             score -= min(30, excess * 3)
+
+    # Check air humidity
+    if latest.get('air_humidity') is not None:
+        if latest['air_humidity'] < plant.get('ideal_air_humidity_min', 40):
+            deficit = plant.get('ideal_air_humidity_min', 40) - latest['air_humidity']
+            issues.append(
+                f"Air too dry ({latest['air_humidity']:.1f}% \u2014 min: {plant.get('ideal_air_humidity_min', 40)}%)")
+            score -= min(20, deficit * 1.5)
+        elif latest['air_humidity'] > plant.get('ideal_air_humidity_max', 80):
+            excess = latest['air_humidity'] - plant.get('ideal_air_humidity_max', 80)
+            issues.append(
+                f"Air too humid ({latest['air_humidity']:.1f}% \u2014 max: {plant.get('ideal_air_humidity_max', 80)}%)")
+            score -= min(20, excess * 1.5)
 
     score = max(0, score)
 
