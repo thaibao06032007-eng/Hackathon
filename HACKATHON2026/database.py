@@ -23,8 +23,6 @@ def init_db():
             ideal_soil_humidity_max REAL DEFAULT 70,
             ideal_temperature_min REAL DEFAULT 18,
             ideal_temperature_max REAL DEFAULT 30,
-            ideal_light_min REAL DEFAULT 200,
-            ideal_light_max REAL DEFAULT 800,
             water_duration INTEGER DEFAULT 5,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
@@ -34,7 +32,6 @@ def init_db():
             plant_id INTEGER NOT NULL,
             soil_humidity REAL,
             temperature REAL,
-            light_level REAL,
             recorded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (plant_id) REFERENCES plants(id) ON DELETE CASCADE
         );
@@ -74,8 +71,8 @@ def create_plant(data):
         INSERT INTO plants (name, species, location, esp32_ip,
             ideal_soil_humidity_min, ideal_soil_humidity_max,
             ideal_temperature_min, ideal_temperature_max,
-            ideal_light_min, ideal_light_max, water_duration)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            water_duration)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ''', (
         data['name'],
         data.get('species', ''),
@@ -85,8 +82,6 @@ def create_plant(data):
         data.get('ideal_soil_humidity_max', 70),
         data.get('ideal_temperature_min', 18),
         data.get('ideal_temperature_max', 30),
-        data.get('ideal_light_min', 200),
-        data.get('ideal_light_max', 800),
         data.get('water_duration', 5)
     ))
     conn.commit()
@@ -101,7 +96,7 @@ def update_plant(plant_id, data):
         UPDATE plants SET name=?, species=?, location=?, esp32_ip=?,
             ideal_soil_humidity_min=?, ideal_soil_humidity_max=?,
             ideal_temperature_min=?, ideal_temperature_max=?,
-            ideal_light_min=?, ideal_light_max=?, water_duration=?
+            water_duration=?
         WHERE id=?
     ''', (
         data['name'],
@@ -112,8 +107,6 @@ def update_plant(plant_id, data):
         data.get('ideal_soil_humidity_max', 70),
         data.get('ideal_temperature_min', 18),
         data.get('ideal_temperature_max', 30),
-        data.get('ideal_light_min', 200),
-        data.get('ideal_light_max', 800),
         data.get('water_duration', 5),
         plant_id
     ))
@@ -130,12 +123,12 @@ def delete_plant(plant_id):
 
 # ==================== Sensor Data ====================
 
-def add_sensor_data(plant_id, soil_humidity, temperature, light_level):
+def add_sensor_data(plant_id, soil_humidity, temperature):
     conn = get_db()
     conn.execute('''
-        INSERT INTO sensor_data (plant_id, soil_humidity, temperature, light_level)
-        VALUES (?, ?, ?, ?)
-    ''', (plant_id, soil_humidity, temperature, light_level))
+        INSERT INTO sensor_data (plant_id, soil_humidity, temperature)
+        VALUES (?, ?, ?)
+    ''', (plant_id, soil_humidity, temperature))
     conn.commit()
     conn.close()
 
@@ -223,17 +216,6 @@ def predict_health(plant_id):
             issues.append(
                 f"Too hot ({latest['temperature']:.1f}\u00b0C \u2014 max: {plant['ideal_temperature_max']}\u00b0C)")
             score -= min(30, excess * 3)
-
-    # Check light level
-    if latest['light_level'] is not None:
-        if latest['light_level'] < plant['ideal_light_min']:
-            issues.append(
-                f"Not enough light ({latest['light_level']:.0f} lux \u2014 min: {plant['ideal_light_min']})")
-            score -= 20
-        elif latest['light_level'] > plant['ideal_light_max']:
-            issues.append(
-                f"Too much light ({latest['light_level']:.0f} lux \u2014 max: {plant['ideal_light_max']})")
-            score -= 15
 
     score = max(0, score)
 

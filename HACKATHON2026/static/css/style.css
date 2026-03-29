@@ -416,19 +416,38 @@ body {
 }
 
 /* Health Card */
+.health-tree-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+#health-tree {
+    display: block;
+    transition: filter 0.8s ease;
+}
+
+.health-score-section {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
 .health-score {
     font-size: 3rem;
     font-weight: 700;
     text-align: center;
     line-height: 1;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+    transition: color 0.6s ease;
 }
 
 .health-label {
     text-align: center;
     font-size: 1.1rem;
-    font-weight: 500;
-    margin-bottom: 16px;
+    font-weight: 600;
+    margin-bottom: 0;
+    transition: color 0.6s ease;
 }
 
 .health-details {
@@ -611,6 +630,67 @@ body {
     justify-content: flex-end;
     gap: 8px;
     margin-top: 24px;
+}
+
+.input-with-btn {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.input-with-btn input {
+    flex: 1;
+}
+
+.discover-results {
+    margin-top: 8px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.discover-results.hidden {
+    display: none;
+}
+
+.discover-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-bottom: 1px solid var(--border);
+}
+
+.discover-item:last-child {
+    border-bottom: none;
+}
+
+.discover-item:hover {
+    background: var(--primary-bg);
+}
+
+.discover-item .ip {
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.discover-item .status {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.discover-item.assigned .status {
+    color: var(--warning);
+}
+
+.discover-empty {
+    padding: 12px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
 }
 
 /* ==================== Modal ==================== */
