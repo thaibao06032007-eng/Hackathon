@@ -266,6 +266,6 @@ Distributed under the **MIT License**. See [LICENSE](LICENSE) for more informati
 
 <div align="center">
 
-**Hackathon 2026** · Made with 💚 by [Bao Dang](https://github.com/thaibao06032007-eng)
+**Hackathon 2026** · Made with 💚 by [Bao Dang, Derin Anderson, Jacob Weigand, Thang Vo](https://github.com/thaibao06032007-eng)
 
 </div>
