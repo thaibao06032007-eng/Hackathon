@@ -1,12 +1,14 @@
 from flask import Flask, render_template, request, jsonify
 import requests as http_requests
 import database as db
-from config import is_valid_local_ip, PERENUAL_API_KEY
+from config import is_valid_local_ip, PERENUAL_API_KEY, GEMINI_API_KEY
 import threading
 import time
 import random
 import math
 from datetime import datetime, timedelta
+import base64
+import json as json_module
 
 app = Flask(__name__)
 
@@ -867,6 +869,107 @@ def api_esp32_discover():
     for d in devices:
         d['assigned'] = d['ip'] in assigned_ips
     return jsonify({'devices': devices})
+
+
+# ==================== API: AI Plant Identification (Gemini Vision) ====================
+
+GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+
+@app.route('/api/identify-plant', methods=['POST'])
+def api_identify_plant():
+    """Identify a plant from an image using Google Gemini Vision API.
+    Accepts base64 image data, returns species + ideal conditions.
+    Image is processed in-memory only — never saved to disk."""
+    if not GEMINI_API_KEY:
+        return jsonify({'error': 'Gemini API key not configured. Set GEMINI_API_KEY in config.py or environment.'}), 503
+
+    data = request.get_json()
+    if not data or not data.get('image'):
+        return jsonify({'error': 'image (base64) is required'}), 400
+
+    image_b64 = data['image']
+    # Strip data URI prefix if present (e.g. "data:image/jpeg;base64,...")
+    if ',' in image_b64:
+        image_b64 = image_b64.split(',', 1)[1]
+
+    prompt_text = """Analyze this plant image and identify the species. Return ONLY a valid JSON object (no markdown, no code fences) with these exact fields:
+{
+  "species": "scientific name of the plant",
+  "common_name": "common name of the plant",
+  "ideal_soil_humidity_min": <number, soil moisture % minimum>,
+  "ideal_soil_humidity_max": <number, soil moisture % maximum>,
+  "ideal_temperature_min": <number, °C minimum>,
+  "ideal_temperature_max": <number, °C maximum>,
+  "ideal_light_min": <number, lux minimum>,
+  "ideal_light_max": <number, lux maximum>,
+  "water_duration": <number, watering seconds for a small pot>,
+  "confidence": "high" or "medium" or "low"
+}
+Base ALL values on established horticultural and botanical science. Use realistic sensor-measurable ranges.
+If you cannot identify the plant, set confidence to "low" and use reasonable generic houseplant values."""
+
+    gemini_payload = {
+        "contents": [{
+            "parts": [
+                {"text": prompt_text},
+                {
+                    "inlineData": {
+                        "mimeType": data.get('mime_type', 'image/jpeg'),
+                        "data": image_b64
+                    }
+                }
+            ]
+        }],
+        "generationConfig": {
+            "temperature": 0.2,
+            "maxOutputTokens": 500
+        }
+    }
+
+    try:
+        resp = http_requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            json=gemini_payload,
+            timeout=30
+        )
+        
+        if resp.status_code != 200:
+            print(f"DEBUG: Gemini API Error Response: {resp.text}")
+            return jsonify({
+                'error': f'Gemini API error ({resp.status_code}): {resp.text}',
+                'status_code': resp.status_code
+            }), resp.status_code
+
+        result = resp.json()
+
+        # Extract text from Gemini response
+        text = result.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+
+        # Clean up: strip markdown code fences if present
+        text = text.strip()
+        if text.startswith('```'):
+            text = text.split('\n', 1)[1] if '\n' in text else text[3:]
+        if text.endswith('```'):
+            text = text[:-3]
+        text = text.strip()
+        if text.startswith('json'):
+            text = text[4:].strip()
+
+        plant_info = json_module.loads(text)
+
+        # Validate required fields
+        required = ['species', 'common_name', 'ideal_soil_humidity_min', 'ideal_soil_humidity_max',
+                    'ideal_temperature_min', 'ideal_temperature_max', 'ideal_light_min', 'ideal_light_max']
+        for field in required:
+            if field not in plant_info:
+                plant_info[field] = None
+
+        return jsonify(plant_info)
+
+    except http_requests.exceptions.RequestException as e:
+        return jsonify({'error': f'Gemini API request failed: {str(e)}'}), 502
+    except (json_module.JSONDecodeError, KeyError, IndexError) as e:
+        return jsonify({'error': f'Could not parse Gemini response: {str(e)}', 'raw': text if 'text' in dir() else ''}), 502
 
 
 # ==================== Run ====================

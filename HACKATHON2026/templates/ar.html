@@ -241,7 +241,7 @@
             #plant-selector { right: 8px; left: 8px; top: auto; bottom: 200px; max-width: none; max-height: 140px; overflow-y: auto; padding: 10px 12px; }
             #ui-container { padding: 8px 12px 16px; }
             .control-group { padding: 8px 12px; margin-bottom: 6px; }
-            .panel-body { /* start collapsed on mobile */ }
+            .panel-body { display: none; /* start collapsed on mobile */ }
         }
     </style>
 
@@ -263,7 +263,7 @@
         </a>
         <div class="nav-links">
             <a href="/" class="nav-link"><span class="material-icons-outlined">dashboard</span><span class="nav-label">Dashboard</span></a>
-            <a href="/history" class="nav-link"><span class="material-icons-outlined">chat</span><span class="nav-label">Notifications</span></a>
+            <a href="/history" class="nav-link"><span class="material-icons-outlined">timeline</span><span class="nav-label">History</span></a>
             <a href="/ar" class="nav-link active"><span class="material-icons-outlined">view_in_ar</span><span class="nav-label">AR View</span></a>
             <a href="/forecast" class="nav-link"><span class="material-icons-outlined">water_drop</span><span class="nav-label">Forecast</span></a>
             <a href="/settings" class="nav-link"><span class="material-icons-outlined">settings</span><span class="nav-label">Settings</span></a>
@@ -388,7 +388,7 @@
             'flower':     { icon: '🌺', builder: createFlowerPlant },
             'fern':       { icon: '🌿', builder: createFern },
             'bamboo':     { icon: '🎋', builder: createBamboo },
-            'default':    { icon: '🌱', builder: createDefaultTree },
+            'default':    { icon: '🌱', builder: createPottedPlant },
         };
 
         // Keyword matching: species/name -> tree type
@@ -398,10 +398,48 @@
             'oak': 'oak', 'maple': 'oak', 'elm': 'oak', 'beech': 'oak', 'birch': 'oak', 'willow': 'oak',
             'cherry': 'cherry', 'sakura': 'cherry', 'plum': 'cherry', 'blossom': 'cherry', 'peach': 'cherry',
             'cactus': 'cactus', 'succulent': 'cactus', 'aloe': 'cactus', 'agave': 'cactus',
-            'rose': 'flower', 'lily': 'flower', 'orchid': 'flower', 'tulip': 'flower', 'daisy': 'flower', 'sunflower': 'flower', 'lavender': 'flower', 'jasmine': 'flower',
+            'rose': 'flower', 'lily': 'flower', 'orchid': 'flower', 'tulip': 'flower', 'daisy': 'flower', 'sunflower': 'flower', 'lavender': 'flower', 'jasmine': 'flower', 'flower': 'flower',
             'fern': 'fern', 'moss': 'fern', 'ivy': 'fern', 'vine': 'fern',
             'bamboo': 'bamboo', 'reed': 'bamboo', 'grass': 'bamboo',
         };
+
+        // ==================== SPECIES BIOLOGY (scientifically accurate) ====================
+        // maxAge: typical maximum lifespan in years
+        // matureHeight: typical mature height in meters (scale factor for 3D model)
+        // seedlingScale: scale of a seedling relative to mature (0-1)
+        // growthB/growthC: Gompertz curve parameters (b=initial delay, c=growth rate)
+        const SPECIES_BIOLOGY = {
+            'pine':    { maxAge: 200, matureHeight: 25,  seedlingScale: 0.02, growthB: 4.0, growthC: 0.025, label: 'Tree' },
+            'palm':    { maxAge: 80,  matureHeight: 20,  seedlingScale: 0.03, growthB: 3.5, growthC: 0.06,  label: 'Tree' },
+            'oak':     { maxAge: 300, matureHeight: 20,  seedlingScale: 0.02, growthB: 4.5, growthC: 0.018, label: 'Tree' },
+            'cherry':  { maxAge: 30,  matureHeight: 8,   seedlingScale: 0.05, growthB: 3.0, growthC: 0.12,  label: 'Tree' },
+            'cactus':  { maxAge: 150, matureHeight: 1.5, seedlingScale: 0.07, growthB: 5.0, growthC: 0.02,  label: 'Plant' },
+            'flower':  { maxAge: 3,   matureHeight: 0.5, seedlingScale: 0.10, growthB: 2.0, growthC: 1.5,   label: 'Plant' },
+            'fern':    { maxAge: 15,  matureHeight: 1.0, seedlingScale: 0.08, growthB: 2.5, growthC: 0.2,   label: 'Plant' },
+            'bamboo':  { maxAge: 50,  matureHeight: 15,  seedlingScale: 0.03, growthB: 2.0, growthC: 0.15,  label: 'Plant' },
+            'default': { maxAge: 20,  matureHeight: 1.0, seedlingScale: 0.10, growthB: 2.5, growthC: 0.2,   label: 'Plant' },
+        };
+
+        // Current species biology reference (updated on plant selection)
+        let currentBiology = SPECIES_BIOLOGY['default'];
+
+        /**
+         * Gompertz growth curve — the standard botanical growth model.
+         * Returns a scale factor between seedlingScale and 1.0
+         * representing the fraction of mature size at a given age.
+         *
+         * Formula: S(age) = seedling + (1 - seedling) * exp(-b * exp(-c * age))
+         *
+         * - Slow initial growth (seedling phase)
+         * - Rapid acceleration (juvenile growth spurt)
+         * - Gradual plateau (maturity)
+         */
+        function gompertzScale(age, biology) {
+            const s0 = biology.seedlingScale;
+            const b = biology.growthB;
+            const c = biology.growthC;
+            return s0 + (1.0 - s0) * Math.exp(-b * Math.exp(-c * age));
+        }
 
         function getTreeTypeForPlant(plant) {
             const text = ((plant.species || '') + ' ' + (plant.name || '')).toLowerCase();
@@ -641,6 +679,19 @@
             const treeType = el.dataset.type;
             currentPlantId = plantId;
 
+            // Update biology reference for this species
+            currentBiology = SPECIES_BIOLOGY[treeType] || SPECIES_BIOLOGY['default'];
+
+            // Update age slider range and label for this species
+            ageSlider.max = currentBiology.maxAge;
+            ageSlider.value = Math.min(parseInt(ageSlider.value), currentBiology.maxAge);
+            document.getElementById('ageVal').innerText = ageSlider.value;
+            // Update label
+            const ageLabel = ageSlider.closest('.control-group').querySelector('label');
+            if (ageLabel) {
+                ageLabel.innerHTML = `<span class="material-icons-outlined">park</span> ${currentBiology.label} Age: <span id="ageVal" class="control-value">${ageSlider.value}</span> / ${currentBiology.maxAge} years`;
+            }
+
             const loadingEl = document.getElementById('model-loading');
 
             // Try loading GLB first
@@ -704,10 +755,10 @@
             treeModel = newModel;
             arAnchorGroup.add(treeModel);
 
-            // Re-apply age scale
+            // Re-apply age scale using Gompertz growth curve
             const age = parseFloat(ageSlider.value);
-            const scaleFactor = 1 + (age * 0.08);
-            treeModel.scale.multiplyScalar(scaleFactor);
+            const scaleFactor = gompertzScale(age, currentBiology);
+            treeModel.scale.multiplyScalar(scaleFactor / gompertzScale(1, currentBiology)); // Normalize relative to age=1
 
             treeBoxHelper.setFromObject(treeModel);
             updateTreeDimensions();
@@ -757,6 +808,114 @@
                 canopy.castShadow = true;
                 group.add(canopy);
             }
+            return group;
+        }
+
+        function createPottedPlant() {
+            const group = new THREE.Group();
+
+            // === TERRACOTTA POT ===
+            const potMat = new THREE.MeshStandardMaterial({ color: 0xc67a4b, roughness: 0.85 });
+
+            // Pot body (truncated cone)
+            const potBody = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.14, 0.10, 0.15, 16),
+                potMat
+            );
+            potBody.position.y = 0.075;
+            potBody.castShadow = true;
+            group.add(potBody);
+
+            // Pot rim (torus at top edge)
+            const rim = new THREE.Mesh(
+                new THREE.TorusGeometry(0.145, 0.012, 8, 16),
+                new THREE.MeshStandardMaterial({ color: 0xb5694a, roughness: 0.7 })
+            );
+            rim.position.y = 0.15;
+            rim.rotation.x = Math.PI / 2;
+            rim.castShadow = true;
+            group.add(rim);
+
+            // Pot bottom (disk)
+            const potBottom = new THREE.Mesh(
+                new THREE.CircleGeometry(0.10, 16),
+                potMat
+            );
+            potBottom.rotation.x = -Math.PI / 2;
+            potBottom.position.y = 0.003;
+            group.add(potBottom);
+
+            // === SOIL ===
+            const soil = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.13, 0.13, 0.02, 16),
+                new THREE.MeshStandardMaterial({ color: 0x3e2723, roughness: 1.0 })
+            );
+            soil.position.y = 0.145;
+            group.add(soil);
+
+            // === FOLIAGE (small indoor plant with leaves) ===
+            const leafColors = [0x2e7d32, 0x388e3c, 0x43a047, 0x4caf50, 0x66bb6a];
+            const stemMat = new THREE.MeshStandardMaterial({ color: 0x33691e, roughness: 0.8 });
+            const stemCount = 7;
+
+            for (let i = 0; i < stemCount; i++) {
+                const stemGroup = new THREE.Group();
+                const angle = (i / stemCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.3;
+                const stemHeight = 0.12 + Math.random() * 0.15;
+                const lean = 0.15 + Math.random() * 0.25;
+
+                // Stem (thin cylinder)
+                const stem = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.006, 0.008, stemHeight, 4),
+                    stemMat
+                );
+                stem.position.y = stemHeight / 2;
+                stem.castShadow = true;
+                stemGroup.add(stem);
+
+                // Leaf (elongated sphere / teardrop shape)
+                const leafSize = 0.04 + Math.random() * 0.03;
+                const leaf = new THREE.Mesh(
+                    new THREE.SphereGeometry(leafSize, 8, 6),
+                    new THREE.MeshStandardMaterial({
+                        color: leafColors[i % leafColors.length],
+                        roughness: 0.6,
+                        metalness: 0.05
+                    })
+                );
+                leaf.scale.set(1, 0.4, 1.8);
+                leaf.position.y = stemHeight + leafSize * 0.2;
+                leaf.rotation.x = Math.random() * 0.3 - 0.15;
+                leaf.castShadow = true;
+                stemGroup.add(leaf);
+
+                // Second smaller leaf on some stems
+                if (i % 2 === 0) {
+                    const leaf2 = new THREE.Mesh(
+                        new THREE.SphereGeometry(leafSize * 0.7, 8, 6),
+                        new THREE.MeshStandardMaterial({
+                            color: leafColors[(i + 2) % leafColors.length],
+                            roughness: 0.6,
+                            metalness: 0.05
+                        })
+                    );
+                    leaf2.scale.set(1, 0.35, 1.6);
+                    leaf2.position.y = stemHeight * 0.65;
+                    leaf2.position.x = 0.02;
+                    leaf2.rotation.z = 0.3;
+                    leaf2.castShadow = true;
+                    stemGroup.add(leaf2);
+                }
+
+                // Position stem group radiating outward from center
+                stemGroup.position.y = 0.15;
+                stemGroup.position.x = Math.cos(angle) * 0.04;
+                stemGroup.position.z = Math.sin(angle) * 0.04;
+                stemGroup.rotation.x = Math.cos(angle) * lean;
+                stemGroup.rotation.z = -Math.sin(angle) * lean;
+                group.add(stemGroup);
+            }
+
             return group;
         }
 
@@ -1295,9 +1454,17 @@
             ageSlider.addEventListener('input', (e) => {
                 const age = parseFloat(e.target.value);
                 document.getElementById('ageVal').innerText = age;
+                // Update label with current / max
+                const ageLabel = ageSlider.closest('.control-group').querySelector('label');
+                if (ageLabel) {
+                    ageLabel.innerHTML = `<span class="material-icons-outlined">park</span> ${currentBiology.label} Age: <span id="ageVal" class="control-value">${age}</span> / ${currentBiology.maxAge} years`;
+                }
                 if (treeModel) {
-                    const scaleFactor = 1 + (age * 0.08);
-                    treeModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                    // Gompertz growth curve — non-linear, biologically accurate
+                    const scaleFactor = gompertzScale(age, currentBiology);
+                    const baseScale = gompertzScale(1, currentBiology); // Scale at age=1 (baseline)
+                    const relativeScale = scaleFactor / baseScale;
+                    treeModel.scale.set(relativeScale, relativeScale, relativeScale);
                     updateTreeDimensions();
                 }
             });

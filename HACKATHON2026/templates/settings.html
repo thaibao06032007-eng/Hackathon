@@ -28,8 +28,56 @@
                 <input type="text" id="plant-name" required maxlength="100">
             </div>
             <div class="form-group">
-                <label for="plant-species">Species</label>
-                <input type="text" id="plant-species" maxlength="100">
+                <label for="plant-species-select">Species (3D Model)</label>
+                <select id="plant-species-select" class="form-select">
+                    <option value="">— Select a species —</option>
+                    <optgroup label="🌲 Trees">
+                        <option value="Pine" data-icon="🌲">🌲 Pine (Spruce, Fir, Cypress)</option>
+                        <option value="Palm" data-icon="🌴">🌴 Palm (Coconut, Tropical)</option>
+                        <option value="Oak" data-icon="🌳">🌳 Oak (Maple, Elm, Birch, Willow)</option>
+                        <option value="Cherry Blossom" data-icon="🌸">🌸 Cherry Blossom (Sakura, Plum, Peach)</option>
+                        <option value="Bamboo" data-icon="🎋">🎋 Bamboo (Reed, Grass)</option>
+                    </optgroup>
+                    <optgroup label="🌵 Plants">
+                        <option value="Cactus" data-icon="🌵">🌵 Cactus (Succulent, Aloe, Agave)</option>
+                        <option value="Flower" data-icon="🌺">🌺 Flower (Rose, Lily, Orchid, Tulip, Daisy)</option>
+                        <option value="Fern" data-icon="🌿">🌿 Fern (Moss, Ivy, Vine)</option>
+                    </optgroup>
+                    <optgroup label="✏️ Other">
+                        <option value="custom" data-icon="🌱">🌱 Custom (Name your own)</option>
+                    </optgroup>
+                </select>
+                <input type="text" id="plant-species-custom" maxlength="100" placeholder="Enter custom species name..." style="display:none; margin-top: 8px;">
+                <input type="hidden" id="plant-species">
+                <div id="species-3d-preview" class="species-preview" style="display:none;">
+                    <span id="species-preview-icon" class="species-preview-icon"></span>
+                    <span id="species-preview-text" class="species-preview-text"></span>
+                </div>
+                <!-- AI Image Identification (Custom only) -->
+                <div id="custom-image-area" class="custom-image-area" style="display:none;">
+                    <div class="image-upload-header">
+                        <span class="material-icons-outlined" style="font-size:18px; color: var(--primary);">auto_awesome</span>
+                        <span>AI Plant Identification</span>
+                    </div>
+                    <p class="image-upload-hint">Take a photo or upload an image to auto-identify the species and fill ideal conditions.</p>
+                    <div class="image-upload-buttons">
+                        <label class="btn btn-secondary btn-sm image-upload-btn">
+                            <span class="material-icons-outlined" style="font-size:16px;">photo_camera</span>
+                            Take Photo
+                            <input type="file" id="plant-camera-input" accept="image/*" capture="environment" style="display:none;">
+                        </label>
+                        <label class="btn btn-secondary btn-sm image-upload-btn">
+                            <span class="material-icons-outlined" style="font-size:16px;">upload_file</span>
+                            Upload Image
+                            <input type="file" id="plant-image-input" accept="image/*" style="display:none;">
+                        </label>
+                    </div>
+                    <div id="image-preview" class="image-preview" style="display:none;">
+                        <img id="image-preview-img" alt="Plant photo preview">
+                    </div>
+                    <div id="ai-status" class="ai-status" style="display:none;"></div>
+                    <div id="ai-result" class="ai-result" style="display:none;"></div>
+                </div>
             </div>
             <div class="form-group">
                 <label for="plant-location">Location</label>
@@ -37,15 +85,8 @@
             </div>
             <div class="form-group">
                 <label for="plant-esp32-ip">ESP32 IP Address</label>
-                <div class="input-with-btn">
-                    <input type="text" id="plant-esp32-ip" placeholder="10.175.88.158"
-                           pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" title="Enter a valid IP address (e.g. 10.175.88.158)">
-                    <button type="button" id="discover-esp32-btn" class="btn btn-secondary btn-sm">
-                        <span class="material-icons-outlined">search</span>
-                        Discover
-                    </button>
-                </div>
-                <div id="esp32-discover-results" class="discover-results hidden"></div>
+                <input type="text" id="plant-esp32-ip" placeholder="10.175.88.158"
+                       pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" title="Enter a valid IP address (e.g. 10.175.88.158)">
             </div>
 
             <h3>Ideal Conditions</h3>
@@ -67,6 +108,16 @@
                 <div class="form-group">
                     <label for="temp-max">Temperature Max (&deg;C)</label>
                     <input type="number" id="temp-max" value="30" min="-20" max="60">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="light-min">Light Min (lux)</label>
+                    <input type="number" id="light-min" value="200" min="0" max="100000">
+                </div>
+                <div class="form-group">
+                    <label for="light-max">Light Max (lux)</label>
+                    <input type="number" id="light-max" value="800" min="0" max="100000">
                 </div>
             </div>
             <div class="form-group">
