@@ -9,7 +9,7 @@ const SPECIES_PRESETS = {
         conditions: {
             humidity_min: 40, humidity_max: 70,
             temp_min: 15, temp_max: 25,
-            light_min: 10000, light_max: 80000,
+            air_humidity_min: 40, air_humidity_max: 65,
             water_duration: 8
         },
         science: 'Conifers: Ideal active growth requires moderate humidity and bright light. Prevent waterlogging.'
@@ -20,7 +20,7 @@ const SPECIES_PRESETS = {
         conditions: {
             humidity_min: 50, humidity_max: 80,
             temp_min: 18, temp_max: 30,
-            light_min: 5000, light_max: 50000,
+            air_humidity_min: 60, air_humidity_max: 85,
             water_duration: 7
         },
         science: 'Tropical palms: Thrive in consistent warmth and high humidity. Avoid drafts and cold spots.'
@@ -31,7 +31,7 @@ const SPECIES_PRESETS = {
         conditions: {
             humidity_min: 40, humidity_max: 60,
             temp_min: 15, temp_max: 28,
-            light_min: 15000, light_max: 60000,
+            air_humidity_min: 40, air_humidity_max: 70,
             water_duration: 10
         },
         science: 'Temperate deciduous: Moderate moisture. High light requirements for healthy foliage development.'
@@ -42,7 +42,7 @@ const SPECIES_PRESETS = {
         conditions: {
             humidity_min: 50, humidity_max: 70,
             temp_min: 15, temp_max: 25,
-            light_min: 10000, light_max: 60000,
+            air_humidity_min: 50, air_humidity_max: 75,
             water_duration: 8
         },
         science: 'Prunus spp.: Active blooming and growth prefer mild temperatures (15-25°C) and bright, consistent light.'
@@ -53,7 +53,7 @@ const SPECIES_PRESETS = {
         conditions: {
             humidity_min: 50, humidity_max: 80,
             temp_min: 18, temp_max: 35,
-            light_min: 15000, light_max: 60000,
+            air_humidity_min: 55, air_humidity_max: 80,
             water_duration: 7
         },
         science: 'Poaceae family: Fast-growing grass requiring steady moisture, high humidity, and warm environments.'
@@ -64,7 +64,7 @@ const SPECIES_PRESETS = {
         conditions: {
             humidity_min: 10, humidity_max: 30,
             temp_min: 18, temp_max: 35,
-            light_min: 20000, light_max: 100000,
+            air_humidity_min: 10, air_humidity_max: 40,
             water_duration: 3
         },
         science: 'Cactaceae: Arid conditions. Require very dry air, warm temperatures, and maximum direct sunlight.'
@@ -75,7 +75,7 @@ const SPECIES_PRESETS = {
         conditions: {
             humidity_min: 40, humidity_max: 70,
             temp_min: 18, temp_max: 26,
-            light_min: 10000, light_max: 50000,
+            air_humidity_min: 50, air_humidity_max: 75,
             water_duration: 5
         },
         science: 'Blooming plants: Moderate conditions. Avoid extreme heat which wilts flowers. Good indirect/direct mix.'
@@ -86,7 +86,7 @@ const SPECIES_PRESETS = {
         conditions: {
             humidity_min: 60, humidity_max: 90,
             temp_min: 16, temp_max: 24,
-            light_min: 1000, light_max: 8000,
+            air_humidity_min: 60, air_humidity_max: 90,
             water_duration: 6
         },
         science: 'Polypodiopsida: Forest understory. High humidity, cool to warm temps, strict protection from direct midday sun.'
@@ -110,14 +110,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event delegation for edit/delete buttons
     document.getElementById('plants-list').addEventListener('click', (e) => {
-        const item = e.target.closest('.plant-list-item');
+        const item = e.target.closest('.set-plant-card');
         if (!item) return;
         const id = parseInt(item.dataset.id);
 
         if (e.target.closest('.edit-btn')) {
             editPlant(id);
         } else if (e.target.closest('.delete-btn')) {
-            const name = item.querySelector('h3').textContent;
+            const name = item.querySelector('.set-plant-name').textContent;
             confirmDelete(id, name);
         }
     });
@@ -136,8 +136,8 @@ function applyPresetConditions(presetKey) {
     document.getElementById('humidity-max').value = c.humidity_max;
     document.getElementById('temp-min').value = c.temp_min;
     document.getElementById('temp-max').value = c.temp_max;
-    document.getElementById('light-min').value = c.light_min;
-    document.getElementById('light-max').value = c.light_max;
+    document.getElementById('air-humidity-min').value = c.air_humidity_min;
+    document.getElementById('air-humidity-max').value = c.air_humidity_max;
     document.getElementById('water-duration').value = c.water_duration;
 
     // Show auto-fill indicator
@@ -150,7 +150,7 @@ function showConditionsToast(message) {
         toast = document.createElement('div');
         toast.id = 'conditions-toast';
         toast.className = 'conditions-toast';
-        document.querySelector('.modal-content').appendChild(toast);
+        document.querySelector('.set-modal-content').appendChild(toast);
     }
     toast.textContent = message;
     toast.classList.add('show');
@@ -187,7 +187,6 @@ function setupSpeciesDropdown() {
             previewIcon.textContent = SPECIES_PRESETS[val].icon;
             previewText.textContent = SPECIES_PRESETS[val].desc;
             if (imageArea) imageArea.style.display = 'none';
-            // Auto-fill ideal conditions
             applyPresetConditions(val);
         } else {
             customInput.style.display = 'none';
@@ -353,8 +352,8 @@ function applyAIResults(data) {
     if (data.ideal_soil_humidity_max != null) document.getElementById('humidity-max').value = Math.round(data.ideal_soil_humidity_max);
     if (data.ideal_temperature_min != null) document.getElementById('temp-min').value = Math.round(data.ideal_temperature_min);
     if (data.ideal_temperature_max != null) document.getElementById('temp-max').value = Math.round(data.ideal_temperature_max);
-    if (data.ideal_light_min != null) document.getElementById('light-min').value = Math.round(data.ideal_light_min);
-    if (data.ideal_light_max != null) document.getElementById('light-max').value = Math.round(data.ideal_light_max);
+    if (data.ideal_air_humidity_min != null) document.getElementById('air-humidity-min').value = Math.round(data.ideal_air_humidity_min);
+    if (data.ideal_air_humidity_max != null) document.getElementById('air-humidity-max').value = Math.round(data.ideal_air_humidity_max);
     if (data.water_duration != null) document.getElementById('water-duration').value = Math.round(data.water_duration);
 
     showConditionsToast(`🤖 AI identified: ${displayName} — ideal conditions filled from botanical analysis`);
@@ -389,17 +388,34 @@ async function loadPlants() {
         list.innerHTML = plants.map(plant => {
             const speciesInfo = getSpeciesDisplayInfo(plant.species);
             return `
-            <div class="plant-list-item" data-id="${plant.id}">
-                <span class="plant-list-icon">${speciesInfo.icon}</span>
-                <div class="plant-list-info">
-                    <h3>${escapeHtml(plant.name)}</h3>
-                    <p>${escapeHtml(speciesInfo.label)} &middot; ${escapeHtml(plant.location || 'No location')} &middot; ESP32: ${escapeHtml(plant.esp32_ip || 'Not configured')}</p>
+            <div class="set-plant-card" data-id="${plant.id}">
+                <div class="set-plant-card-top">
+                    <span class="set-plant-avatar">${speciesInfo.icon}</span>
+                    <div class="set-plant-info">
+                        <span class="set-plant-name">${escapeHtml(plant.name)}</span>
+                        <span class="set-plant-species">${escapeHtml(speciesInfo.label)}</span>
+                    </div>
                 </div>
-                <div class="plant-list-actions">
-                    <button class="btn btn-secondary btn-sm edit-btn">
+                <div class="set-plant-meta">
+                    <div class="set-plant-meta-item">
+                        <span class="material-icons-outlined">place</span>
+                        <span>${escapeHtml(plant.location || 'No location')}</span>
+                    </div>
+                    <div class="set-plant-meta-item">
+                        <span class="material-icons-outlined">lan</span>
+                        <span>${escapeHtml(plant.esp32_ip || 'Not configured')}</span>
+                    </div>
+                </div>
+                <div class="set-plant-conditions">
+                    <span class="set-cond-pill" title="Soil Humidity"><span class="material-icons-outlined">water_drop</span>${plant.ideal_soil_humidity_min}–${plant.ideal_soil_humidity_max}%</span>
+                    <span class="set-cond-pill" title="Temperature"><span class="material-icons-outlined">thermostat</span>${plant.ideal_temperature_min}–${plant.ideal_temperature_max}°C</span>
+                    <span class="set-cond-pill" title="Air Humidity"><span class="material-icons-outlined">air</span>${plant.ideal_air_humidity_min}–${plant.ideal_air_humidity_max}%</span>
+                </div>
+                <div class="set-plant-actions">
+                    <button class="set-edit-btn edit-btn">
                         <span class="material-icons-outlined">edit</span> Edit
                     </button>
-                    <button class="btn btn-danger btn-sm delete-btn">
+                    <button class="set-delete-btn delete-btn">
                         <span class="material-icons-outlined">delete</span>
                     </button>
                 </div>

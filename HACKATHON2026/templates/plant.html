@@ -8,35 +8,17 @@
 {% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <a href="/" class="btn btn-back">
-        <span class="material-icons-outlined">arrow_back</span>
-        Back
-    </a>
-    <h1 id="plant-name">Loading...</h1>
-    <div id="health-badge" class="health-badge"></div>
-</div>
-
-<div class="plant-detail-grid">
-    <!-- Current Sensor Readings -->
-    <div class="card sensor-card">
-        <h2>Current Readings</h2>
-        <div class="sensor-readings">
-            <div class="sensor-item">
-                <span class="material-icons-outlined">water_drop</span>
-                <div class="sensor-info">
-                    <span class="sensor-label">Soil Humidity</span>
-                    <span id="humidity-value" class="sensor-value">--</span>
-                </div>
-                <div id="humidity-bar" class="sensor-bar"><div class="sensor-bar-fill"></div></div>
-            </div>
-            <div class="sensor-item">
-                <span class="material-icons-outlined">thermostat</span>
-                <div class="sensor-info">
-                    <span class="sensor-label">Temperature</span>
-                    <span id="temp-value" class="sensor-value">--</span>
-                </div>
-                <div id="temp-bar" class="sensor-bar"><div class="sensor-bar-fill"></div></div>
+<div class="pd-page">
+    <!-- Hero Header -->
+    <div class="pd-hero">
+        <a href="/" class="pd-back-btn">
+            <span class="material-icons-outlined">arrow_back</span>
+        </a>
+        <div class="pd-hero-info">
+            <h1 id="plant-name" class="pd-hero-title">Loading...</h1>
+            <div id="health-badge" class="pd-hero-badge">
+                <span class="pd-badge-dot"></span>
+                <span class="pd-badge-text">--</span>
             </div>
             <div class="sensor-item">
                 <span class="material-icons-outlined">air</span>
@@ -47,124 +29,181 @@
                 <div id="air-humidity-bar" class="sensor-bar"><div class="sensor-bar-fill"></div></div>
             </div>
         </div>
-    </div>
-
-    <!-- Health Prediction -->
-    <div class="card health-card">
-        <h2>Health Prediction</h2>
-        <div class="health-tree-container">
-            <svg id="health-tree" viewBox="0 0 200 260" width="260" height="320">
-                <!-- Trunk -->
-                <rect id="tree-trunk" x="90" y="160" width="20" height="80" rx="4" fill="#8B6914"/>
-                <!-- Branches -->
-                <line id="tree-branch-l" x1="100" y1="170" x2="50" y2="125" stroke="#8B6914" stroke-width="6" stroke-linecap="round"/>
-                <line id="tree-branch-r" x1="100" y1="170" x2="150" y2="125" stroke="#8B6914" stroke-width="6" stroke-linecap="round"/>
-                <line id="tree-branch-l2" x1="100" y1="150" x2="65" y2="105" stroke="#8B6914" stroke-width="4" stroke-linecap="round"/>
-                <line id="tree-branch-r2" x1="100" y1="150" x2="135" y2="105" stroke="#8B6914" stroke-width="4" stroke-linecap="round"/>
-                <!-- Canopy layers (bottom to top) -->
-                <ellipse id="tree-canopy-3" cx="100" cy="125" rx="75" ry="40" fill="#2d6a4f" opacity="0.85">
-                    <animate attributeName="ry" values="40;45;40" dur="3.5s" repeatCount="indefinite"/>
-                    <animate attributeName="rx" values="75;80;75" dur="3.5s" repeatCount="indefinite"/>
-                </ellipse>
-                <ellipse id="tree-canopy-2" cx="100" cy="88" rx="60" ry="33" fill="#40916c" opacity="0.9">
-                    <animate attributeName="ry" values="33;38;33" dur="3s" repeatCount="indefinite"/>
-                    <animate attributeName="rx" values="60;65;60" dur="3s" repeatCount="indefinite"/>
-                </ellipse>
-                <ellipse id="tree-canopy-1" cx="100" cy="58" rx="42" ry="27" fill="#52b788" opacity="0.95">
-                    <animate attributeName="ry" values="27;32;27" dur="2.5s" repeatCount="indefinite"/>
-                    <animate attributeName="rx" values="42;47;42" dur="2.5s" repeatCount="indefinite"/>
-                </ellipse>
-                <!-- Falling leaves (shown when unhealthy) -->
-                <g id="falling-leaves" style="display:none;">
-                    <ellipse class="falling-leaf" cx="45" cy="140" rx="5" ry="3" fill="#c1753c">
-                        <animate attributeName="cy" values="140;260" dur="2.2s" repeatCount="indefinite"/>
-                        <animate attributeName="cx" values="45;30" dur="2.2s" repeatCount="indefinite"/>
-                        <animate attributeName="opacity" values="1;0" dur="2.2s" repeatCount="indefinite"/>
-                        <animateTransform attributeName="transform" type="rotate" values="0;360" dur="2.2s" repeatCount="indefinite"/>
-                    </ellipse>
-                    <ellipse class="falling-leaf" cx="150" cy="125" rx="4" ry="2.5" fill="#b5651d">
-                        <animate attributeName="cy" values="125;260" dur="2.8s" begin="0.3s" repeatCount="indefinite"/>
-                        <animate attributeName="cx" values="150;168" dur="2.8s" begin="0.3s" repeatCount="indefinite"/>
-                        <animate attributeName="opacity" values="1;0" dur="2.8s" begin="0.3s" repeatCount="indefinite"/>
-                        <animateTransform attributeName="transform" type="rotate" values="0;-360" dur="2.8s" begin="0.3s" repeatCount="indefinite"/>
-                    </ellipse>
-                    <ellipse class="falling-leaf" cx="75" cy="135" rx="4" ry="2" fill="#c1753c">
-                        <animate attributeName="cy" values="135;260" dur="2.5s" begin="0.7s" repeatCount="indefinite"/>
-                        <animate attributeName="cx" values="75;60" dur="2.5s" begin="0.7s" repeatCount="indefinite"/>
-                        <animate attributeName="opacity" values="1;0" dur="2.5s" begin="0.7s" repeatCount="indefinite"/>
-                    </ellipse>
-                    <ellipse class="falling-leaf" cx="120" cy="130" rx="3" ry="2" fill="#a07828">
-                        <animate attributeName="cy" values="130;260" dur="3s" begin="1.2s" repeatCount="indefinite"/>
-                        <animate attributeName="cx" values="120;140" dur="3s" begin="1.2s" repeatCount="indefinite"/>
-                        <animate attributeName="opacity" values="1;0" dur="3s" begin="1.2s" repeatCount="indefinite"/>
-                        <animateTransform attributeName="transform" type="rotate" values="0;270" dur="3s" begin="1.2s" repeatCount="indefinite"/>
-                    </ellipse>
-                    <ellipse class="falling-leaf" cx="55" cy="120" rx="3.5" ry="2" fill="#b5651d">
-                        <animate attributeName="cy" values="120;260" dur="2.6s" begin="1.8s" repeatCount="indefinite"/>
-                        <animate attributeName="cx" values="55;38" dur="2.6s" begin="1.8s" repeatCount="indefinite"/>
-                        <animate attributeName="opacity" values="1;0" dur="2.6s" begin="1.8s" repeatCount="indefinite"/>
-                    </ellipse>
-                </g>
-            </svg>
-        </div>
-        <div class="health-score-section">
-            <div id="health-score" class="health-score">--</div>
-            <div id="health-label" class="health-label">No Data</div>
-        </div>
-        <ul id="health-details" class="health-details"></ul>
-    </div>
-
-    <!-- Controls -->
-    <div class="card controls-card">
-        <h2>Controls</h2>
-        <div class="auto-water-toggle">
-            <label class="toggle-label">
-                <input type="checkbox" id="auto-water-toggle">
-                Auto-Watering
-            </label>
-            <span id="auto-water-status" class="toggle-status">--</span>
-        </div>
-        <div class="water-controls">
-            <select id="water-duration" class="select">
-                <option value="5" selected>5 seconds</option>
-                <option value="10">10 seconds</option>
-                <option value="15">15 seconds</option>
-                <option value="30">30 seconds</option>
-                <option value="45">45 seconds</option>
-                <option value="60">60 seconds</option>
-                <option value="custom">Custom...</option>
-            </select>
-            <input type="number" id="custom-water-duration" class="input custom-duration hidden"
-                   min="1" max="3600" placeholder="1-3600 sec" style="width: 120px;">
-            <button id="water-btn" class="btn btn-water">
-                <span class="material-icons-outlined">water</span>
-                Water Plant
-            </button>
-        </div>
-        <div id="water-status" class="water-status"></div>
-        <div class="last-watered">
-            <span>Last watered:</span>
-            <span id="last-watered-time">Never</span>
+        <div class="pd-hero-score-wrap">
+            <div id="health-score" class="pd-hero-score">--</div>
+            <div id="health-label" class="pd-hero-score-label">No Data</div>
         </div>
     </div>
 
-    <!-- 24h History Chart -->
-    <div class="card chart-card">
-        <h2>24h History</h2>
-        <div class="chart-wrapper">
-            <canvas id="mini-chart"></canvas>
+    <!-- Main Grid -->
+    <div class="pd-grid">
+        <!-- Sensor Readings -->
+        <div class="pd-card pd-sensor-card">
+            <div class="pd-card-header">
+                <span class="pd-card-icon"><span class="material-icons-outlined">sensors</span></span>
+                <h2 class="pd-card-title">Live Readings</h2>
+            </div>
+            <div class="pd-sensors">
+                <div class="pd-sensor-item">
+                    <div class="pd-sensor-icon pd-sensor-icon-water">
+                        <span class="material-icons-outlined">water_drop</span>
+                    </div>
+                    <div class="pd-sensor-body">
+                        <span class="pd-sensor-label">Soil Humidity</span>
+                        <span id="humidity-value" class="pd-sensor-value">--</span>
+                    </div>
+                    <div id="humidity-bar" class="pd-sensor-bar"><div class="pd-sensor-bar-fill pd-bar-water"></div></div>
+                </div>
+                <div class="pd-sensor-item">
+                    <div class="pd-sensor-icon pd-sensor-icon-temp">
+                        <span class="material-icons-outlined">thermostat</span>
+                    </div>
+                    <div class="pd-sensor-body">
+                        <span class="pd-sensor-label">Temperature</span>
+                        <span id="temp-value" class="pd-sensor-value">--</span>
+                    </div>
+                    <div id="temp-bar" class="pd-sensor-bar"><div class="pd-sensor-bar-fill pd-bar-temp"></div></div>
+                </div>
+                <div class="pd-sensor-item">
+                    <div class="pd-sensor-icon pd-sensor-icon-air">
+                        <span class="material-icons-outlined">air</span>
+                    </div>
+                    <div class="pd-sensor-body">
+                        <span class="pd-sensor-label">Air Humidity</span>
+                        <span id="air-humidity-value" class="pd-sensor-value">--</span>
+                    </div>
+                    <div id="air-humidity-bar" class="pd-sensor-bar"><div class="pd-sensor-bar-fill pd-bar-air"></div></div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- 3D Plant View -->
-    <div class="card model-card">
-        <h2>3D Plant View</h2>
-        <div id="plant-3d" class="plant-3d-container"></div>
-        <div class="model-controls">
-            <label class="toggle-label">
-                <input type="checkbox" id="show-future">
-                Show Predicted Future Growth
-            </label>
+        <!-- Health Prediction -->
+        <div class="pd-card pd-health-card">
+            <div class="pd-card-header">
+                <span class="pd-card-icon"><span class="material-icons-outlined">monitor_heart</span></span>
+                <h2 class="pd-card-title">Health Prediction</h2>
+            </div>
+            <div class="pd-health-tree-wrap">
+                <svg id="health-tree" viewBox="0 0 200 260" width="220" height="270">
+                    <rect id="tree-trunk" x="90" y="160" width="20" height="80" rx="4" fill="#8B6914"/>
+                    <line id="tree-branch-l" x1="100" y1="170" x2="50" y2="125" stroke="#8B6914" stroke-width="6" stroke-linecap="round"/>
+                    <line id="tree-branch-r" x1="100" y1="170" x2="150" y2="125" stroke="#8B6914" stroke-width="6" stroke-linecap="round"/>
+                    <line id="tree-branch-l2" x1="100" y1="150" x2="65" y2="105" stroke="#8B6914" stroke-width="4" stroke-linecap="round"/>
+                    <line id="tree-branch-r2" x1="100" y1="150" x2="135" y2="105" stroke="#8B6914" stroke-width="4" stroke-linecap="round"/>
+                    <ellipse id="tree-canopy-3" cx="100" cy="125" rx="75" ry="40" fill="#2d6a4f" opacity="0.85">
+                        <animate attributeName="ry" values="40;45;40" dur="3.5s" repeatCount="indefinite"/>
+                        <animate attributeName="rx" values="75;80;75" dur="3.5s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <ellipse id="tree-canopy-2" cx="100" cy="88" rx="60" ry="33" fill="#40916c" opacity="0.9">
+                        <animate attributeName="ry" values="33;38;33" dur="3s" repeatCount="indefinite"/>
+                        <animate attributeName="rx" values="60;65;60" dur="3s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <ellipse id="tree-canopy-1" cx="100" cy="58" rx="42" ry="27" fill="#52b788" opacity="0.95">
+                        <animate attributeName="ry" values="27;32;27" dur="2.5s" repeatCount="indefinite"/>
+                        <animate attributeName="rx" values="42;47;42" dur="2.5s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <g id="falling-leaves" style="display:none;">
+                        <ellipse class="falling-leaf" cx="45" cy="140" rx="5" ry="3" fill="#c1753c">
+                            <animate attributeName="cy" values="140;260" dur="2.2s" repeatCount="indefinite"/>
+                            <animate attributeName="cx" values="45;30" dur="2.2s" repeatCount="indefinite"/>
+                            <animate attributeName="opacity" values="1;0" dur="2.2s" repeatCount="indefinite"/>
+                            <animateTransform attributeName="transform" type="rotate" values="0;360" dur="2.2s" repeatCount="indefinite"/>
+                        </ellipse>
+                        <ellipse class="falling-leaf" cx="150" cy="125" rx="4" ry="2.5" fill="#b5651d">
+                            <animate attributeName="cy" values="125;260" dur="2.8s" begin="0.3s" repeatCount="indefinite"/>
+                            <animate attributeName="cx" values="150;168" dur="2.8s" begin="0.3s" repeatCount="indefinite"/>
+                            <animate attributeName="opacity" values="1;0" dur="2.8s" begin="0.3s" repeatCount="indefinite"/>
+                            <animateTransform attributeName="transform" type="rotate" values="0;-360" dur="2.8s" begin="0.3s" repeatCount="indefinite"/>
+                        </ellipse>
+                        <ellipse class="falling-leaf" cx="75" cy="135" rx="4" ry="2" fill="#c1753c">
+                            <animate attributeName="cy" values="135;260" dur="2.5s" begin="0.7s" repeatCount="indefinite"/>
+                            <animate attributeName="cx" values="75;60" dur="2.5s" begin="0.7s" repeatCount="indefinite"/>
+                            <animate attributeName="opacity" values="1;0" dur="2.5s" begin="0.7s" repeatCount="indefinite"/>
+                        </ellipse>
+                        <ellipse class="falling-leaf" cx="120" cy="130" rx="3" ry="2" fill="#a07828">
+                            <animate attributeName="cy" values="130;260" dur="3s" begin="1.2s" repeatCount="indefinite"/>
+                            <animate attributeName="cx" values="120;140" dur="3s" begin="1.2s" repeatCount="indefinite"/>
+                            <animate attributeName="opacity" values="1;0" dur="3s" begin="1.2s" repeatCount="indefinite"/>
+                            <animateTransform attributeName="transform" type="rotate" values="0;270" dur="3s" begin="1.2s" repeatCount="indefinite"/>
+                        </ellipse>
+                        <ellipse class="falling-leaf" cx="55" cy="120" rx="3.5" ry="2" fill="#b5651d">
+                            <animate attributeName="cy" values="120;260" dur="2.6s" begin="1.8s" repeatCount="indefinite"/>
+                            <animate attributeName="cx" values="55;38" dur="2.6s" begin="1.8s" repeatCount="indefinite"/>
+                            <animate attributeName="opacity" values="1;0" dur="2.6s" begin="1.8s" repeatCount="indefinite"/>
+                        </ellipse>
+                    </g>
+                </svg>
+            </div>
+            <ul id="health-details" class="pd-health-details"></ul>
+        </div>
+
+        <!-- Controls -->
+        <div class="pd-card pd-controls-card">
+            <div class="pd-card-header">
+                <span class="pd-card-icon"><span class="material-icons-outlined">tune</span></span>
+                <h2 class="pd-card-title">Controls</h2>
+            </div>
+            <div class="pd-auto-toggle">
+                <div class="pd-toggle-left">
+                    <span class="material-icons-outlined">autorenew</span>
+                    <span>Auto-Watering</span>
+                </div>
+                <label class="pd-switch">
+                    <input type="checkbox" id="auto-water-toggle">
+                    <span class="pd-switch-slider"></span>
+                </label>
+                <span id="auto-water-status" class="pd-toggle-status">--</span>
+            </div>
+            <div class="pd-water-controls">
+                <select id="water-duration" class="pd-select">
+                    <option value="5" selected>5 seconds</option>
+                    <option value="10">10 seconds</option>
+                    <option value="15">15 seconds</option>
+                    <option value="30">30 seconds</option>
+                    <option value="45">45 seconds</option>
+                    <option value="60">60 seconds</option>
+                    <option value="custom">Custom...</option>
+                </select>
+                <input type="number" id="custom-water-duration" class="pd-custom-input hidden"
+                       min="1" max="3600" placeholder="1-3600s">
+                <button id="water-btn" class="pd-water-btn">
+                    <span class="material-icons-outlined">water</span>
+                    Water Now
+                </button>
+            </div>
+            <div id="water-status" class="pd-water-status"></div>
+            <div class="pd-last-watered">
+                <span class="material-icons-outlined">history</span>
+                <span>Last watered:</span>
+                <span id="last-watered-time">Never</span>
+            </div>
+        </div>
+
+        <!-- 24h History Chart -->
+        <div class="pd-card pd-chart-card">
+            <div class="pd-card-header">
+                <span class="pd-card-icon"><span class="material-icons-outlined">show_chart</span></span>
+                <h2 class="pd-card-title">24h History</h2>
+            </div>
+            <div class="pd-chart-wrapper">
+                <canvas id="mini-chart"></canvas>
+            </div>
+        </div>
+
+        <!-- 3D Plant View -->
+        <div class="pd-card pd-model-card">
+            <div class="pd-card-header">
+                <span class="pd-card-icon"><span class="material-icons-outlined">view_in_ar</span></span>
+                <h2 class="pd-card-title">3D Plant View</h2>
+            </div>
+            <div id="plant-3d" class="pd-3d-container"></div>
+            <div class="pd-model-controls">
+                <label class="pd-future-toggle">
+                    <input type="checkbox" id="show-future">
+                    <span class="material-icons-outlined">trending_up</span>
+                    Show Predicted Future Growth
+                </label>
+            </div>
         </div>
     </div>
 </div>

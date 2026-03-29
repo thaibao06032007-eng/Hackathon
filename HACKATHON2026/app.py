@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 import requests as http_requests
 import database as db
-from config import is_valid_local_ip, PERENUAL_API_KEY, GEMINI_API_KEY
+from config import is_valid_local_ip, GROQ_API_KEY
 import threading
 import time
 import random
@@ -272,16 +272,16 @@ PLANT_CHAT_MESSAGES = {
     'temp_good': [
         "Temperature is a comfy {value:.0f}°C. I'm feeling great! 🌤️",
     ],
-    'light_low': [
-        "It's pretty dark where I am ({value:.0f} lux). I could use more sunshine! 🌑",
-        "Not enough light ({value:.0f} lux)! Can you move me closer to a window? 🪟",
+    'air_dry': [
+        "The air around me is pretty dry ({value:.0f}%)! I could use some humidity 💨",
+        "Air humidity is only {value:.0f}%! My leaves are getting crispy 🏜️",
     ],
-    'light_high': [
-        "The light is super intense ({value:.0f} lux)! A little shade would be nice 😎",
-        "Too bright! {value:.0f} lux is scorching my leaves. Sunglasses needed! 🕶️",
+    'air_humid': [
+        "Wow, it's quite humid here ({value:.0f}%)! Perfect for me 🌊",
+        "The air is nice and moist at {value:.0f}%. I love it! 💧",
     ],
-    'light_good': [
-        "Lighting is perfect at {value:.0f} lux! Photosynthesis mode ON ☀️🌿",
+    'air_good': [
+        "Air humidity is perfect at {value:.0f}%! My leaves are loving it 🍃",
     ],
     'watered_recently': [
         "Thanks for watering me! That {duration}s drink was refreshing 💙",
@@ -383,17 +383,17 @@ def generate_chat_messages(plant, sensor_data, health, weather_today=None, water
             else:
                 messages.append({'type': 'good', 'priority': 0, 'text': pick('temp_good', value=temp), 'time': time_str, 'icon': 'thermostat'})
 
-        # Light
-        light = sensor_data.get('light_level')
-        if light is not None:
-            light_min = plant.get('ideal_light_min', 200)
-            light_max = plant.get('ideal_light_max', 800)
-            if light < light_min:
-                messages.append({'type': 'warning', 'priority': 1, 'text': pick('light_low', value=light), 'time': time_str, 'icon': 'light_mode'})
-            elif light > light_max:
-                messages.append({'type': 'warning', 'priority': 1, 'text': pick('light_high', value=light), 'time': time_str, 'icon': 'light_mode'})
+        # Air Humidity
+        air_humidity = sensor_data.get('air_humidity')
+        if air_humidity is not None:
+            air_min = plant.get('ideal_air_humidity_min', 40)
+            air_max = plant.get('ideal_air_humidity_max', 80)
+            if air_humidity < air_min:
+                messages.append({'type': 'warning', 'priority': 1, 'text': pick('air_dry', value=air_humidity), 'time': time_str, 'icon': 'air'})
+            elif air_humidity > air_max:
+                messages.append({'type': 'warning', 'priority': 1, 'text': pick('air_humid', value=air_humidity), 'time': time_str, 'icon': 'air'})
             else:
-                messages.append({'type': 'good', 'priority': 0, 'text': pick('light_good', value=light), 'time': time_str, 'icon': 'light_mode'})
+                messages.append({'type': 'good', 'priority': 0, 'text': pick('air_good', value=air_humidity), 'time': time_str, 'icon': 'air'})
 
     # Health score
     if health and health.get('score') is not None:
@@ -447,17 +447,14 @@ def _generate_demo_sensor_history():
         # Temperature: cooler at night, warmer midday
         base_temp = 23 + 5 * math.sin((hour - 6) / 12 * math.pi)
         temp = round(base_temp + random.uniform(-1, 1), 1)
-        # Light: low at night, peaks midday
-        if 6 <= t.hour <= 19:
-            base_light = 300 + 400 * math.sin((hour - 6) / 13 * math.pi)
-        else:
-            base_light = random.uniform(5, 30)
-        light = round(base_light + random.uniform(-20, 20), 0)
+        # Air humidity: stable around 60%, slight variations
+        base_air = 60 + 8 * math.sin((hour - 6) / 12 * math.pi)
+        air = round(base_air + random.uniform(-3, 3), 1)
         history.append({
             'recorded_at': t.strftime('%Y-%m-%d %H:%M:%S'),
             'soil_humidity': max(0, min(100, soil)),
             'temperature': max(5, min(45, temp)),
-            'light_level': max(0, light)
+            'air_humidity': max(0, min(100, air))
         })
     return history
 
@@ -541,7 +538,64 @@ def api_plant_chat(plant_id):
 
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 OPEN_METEO_GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
-PERENUAL_BASE_URL = "https://perenual.com/api/v2"
+
+
+# ==================== Helper: Get plant care via Groq ====================
+def _get_plant_care_from_groq(plant_name):
+    """Ask Groq LLM for plant care information. Returns dict or None."""
+    if not GROQ_API_KEY or not plant_name:
+        return None
+
+    prompt = f"""You are a botanical expert. Give me care information for the plant: "{plant_name}".
+Return ONLY a valid JSON object (no markdown, no code fences) with these exact fields:
+{{
+  "common_name": "common name",
+  "scientific_name": ["scientific name"],
+  "watering": "Frequent" or "Average" or "Minimum",
+  "watering_benchmark_value": "number or range like 3-5",
+  "watering_benchmark_unit": "days",
+  "sunlight": ["Full sun", "Part shade", etc.],
+  "care_level": "Low" or "Medium" or "High",
+  "growth_rate": "Low" or "Medium" or "High",
+  "drought_tolerant": true or false,
+  "indoor": true or false,
+  "description": "Brief 1-2 sentence description of the plant"
+}}
+Base ALL values on established horticultural science. watering_benchmark_value should indicate how many days between waterings."""
+
+    try:
+        resp = http_requests.post(
+            GROQ_API_URL,
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.2,
+                "max_tokens": 400
+            },
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
+            timeout=15
+        )
+        if resp.status_code != 200:
+            print(f"DEBUG: Groq care API error: {resp.text}")
+            return None
+
+        text = resp.json().get('choices', [{}])[0].get('message', {}).get('content', '')
+        text = text.strip()
+        if text.startswith('```'):
+            text = text.split('\n', 1)[1] if '\n' in text else text[3:]
+        if text.endswith('```'):
+            text = text[:-3]
+        text = text.strip()
+        if text.startswith('json'):
+            text = text[4:].strip()
+
+        return json_module.loads(text)
+    except Exception as e:
+        print(f"DEBUG: Groq care lookup error: {e}")
+        return None
 
 
 @app.route('/api/geocode', methods=['GET'])
@@ -575,7 +629,7 @@ def api_geocode():
 
 @app.route('/api/plant-care/<int:plant_id>', methods=['GET'])
 def api_get_plant_care(plant_id):
-    """Fetch care info from Perenual API based on plant species."""
+    """Fetch care info using Groq LLM based on plant species."""
     plant = db.get_plant(plant_id)
     if not plant:
         return jsonify({'error': 'Plant not found'}), 404
@@ -585,59 +639,24 @@ def api_get_plant_care(plant_id):
     if not search_query:
         return jsonify({'error': 'No species or name to search'}), 400
 
-    # Step 1: Search for the species on Perenual
-    try:
-        resp = http_requests.get(f"{PERENUAL_BASE_URL}/species-list", params={
-            'key': PERENUAL_API_KEY,
-            'q': search_query
-        }, timeout=10)
-        resp.raise_for_status()
-        search_data = resp.json()
-    except Exception as e:
-        return jsonify({'error': f'Perenual search failed: {str(e)}'}), 502
+    care_data = _get_plant_care_from_groq(search_query)
+    if not care_data:
+        return jsonify({'error': f'Could not find care data for "{search_query}"'}), 502
 
-    results = search_data.get('data', [])
-    if not results:
-        return jsonify({'error': f'No plant found for "{search_query}"'}), 404
-
-    # Pick the first match
-    perenual_id = results[0]['id']
-
-    # Step 2: Get detailed species info
-    try:
-        resp = http_requests.get(f"{PERENUAL_BASE_URL}/species/details/{perenual_id}", params={
-            'key': PERENUAL_API_KEY
-        }, timeout=10)
-        resp.raise_for_status()
-        details = resp.json()
-    except Exception as e:
-        return jsonify({'error': f'Perenual details failed: {str(e)}'}), 502
-
-    # Extract care data
-    watering_benchmark = details.get('watering_general_benchmark') or {}
     care_info = {
-        'perenual_id': perenual_id,
-        'common_name': details.get('common_name', ''),
-        'scientific_name': details.get('scientific_name', []),
-        'watering': details.get('watering', 'Average'),
-        'watering_benchmark_value': watering_benchmark.get('value', ''),
-        'watering_benchmark_unit': watering_benchmark.get('unit', ''),
-        'sunlight': details.get('sunlight', []),
-        'care_level': details.get('care_level', ''),
-        'growth_rate': details.get('growth_rate', ''),
-        'drought_tolerant': details.get('drought_tolerant', False),
-        'indoor': details.get('indoor', False),
-        'description': details.get('description', ''),
+        'common_name': care_data.get('common_name', ''),
+        'scientific_name': care_data.get('scientific_name', []),
+        'watering': care_data.get('watering', 'Average'),
+        'watering_benchmark_value': care_data.get('watering_benchmark_value', ''),
+        'watering_benchmark_unit': care_data.get('watering_benchmark_unit', 'days'),
+        'sunlight': care_data.get('sunlight', []),
+        'care_level': care_data.get('care_level', ''),
+        'growth_rate': care_data.get('growth_rate', ''),
+        'drought_tolerant': care_data.get('drought_tolerant', False),
+        'indoor': care_data.get('indoor', False),
+        'description': care_data.get('description', ''),
         'image': None
     }
-
-    default_image = details.get('default_image')
-    if default_image:
-        care_info['image'] = (
-            default_image.get('medium_url') or
-            default_image.get('regular_url') or
-            default_image.get('small_url')
-        )
 
     return jsonify(care_info)
 
@@ -680,30 +699,14 @@ def api_get_forecast():
 
     watering_plans = []
     for plant in plants:
-        # Try to get Perenual care data for smarter planning
+        # Try to get care data via Groq for smarter planning
         care_data = None
         species = plant.get('species', '').strip()
         search_q = species if species else plant.get('name', '')
         if search_q:
-            try:
-                resp = http_requests.get(f"{PERENUAL_BASE_URL}/species-list", params={
-                    'key': PERENUAL_API_KEY,
-                    'q': search_q
-                }, timeout=5)
-                if resp.status_code == 200:
-                    search_results = resp.json().get('data', [])
-                    if search_results:
-                        detail_resp = http_requests.get(
-                            f"{PERENUAL_BASE_URL}/species/details/{search_results[0]['id']}",
-                            params={'key': PERENUAL_API_KEY},
-                            timeout=5
-                        )
-                        if detail_resp.status_code == 200:
-                            care_data = detail_resp.json()
-            except Exception:
-                pass
+            care_data = _get_plant_care_from_groq(search_q)
 
-        # Determine watering frequency from Perenual
+        # Determine watering frequency from care data
         watering_level = 'Average'
         watering_days = 3  # default every 3 days
         sunlight_needs = []
@@ -713,8 +716,7 @@ def api_get_forecast():
             watering_level = care_data.get('watering', 'Average')
             drought_tolerant = care_data.get('drought_tolerant', False)
             sunlight_needs = care_data.get('sunlight', [])
-            bench = care_data.get('watering_general_benchmark') or {}
-            bench_val = bench.get('value', '')
+            bench_val = care_data.get('watering_benchmark_value', '')
             if isinstance(bench_val, str) and '-' in str(bench_val):
                 parts = str(bench_val).split('-')
                 try:
@@ -754,7 +756,7 @@ def api_get_forecast():
 
             avg_temp = ((temp_max or 25) + (temp_min or 15)) / 2
 
-            # Smart watering logic using Perenual + weather
+            # Smart watering logic using care data + weather
             should_water = (i % max(1, round(watering_days))) == 0
             water_amount = 'normal'
             reasons = []
@@ -873,26 +875,30 @@ def api_esp32_discover():
     return jsonify({'devices': devices})
 
 
-# ==================== API: AI Plant Identification (Gemini Vision) ====================
+# ==================== API: AI Plant Identification (Groq Vision) ====================
 
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct"
 
 @app.route('/api/identify-plant', methods=['POST'])
 def api_identify_plant():
-    """Identify a plant from an image using Google Gemini Vision API.
+    """Identify a plant from an image using Groq Vision API.
     Accepts base64 image data, returns species + ideal conditions.
     Image is processed in-memory only — never saved to disk."""
-    if not GEMINI_API_KEY:
-        return jsonify({'error': 'Gemini API key not configured. Set GEMINI_API_KEY in config.py or environment.'}), 503
+    if not GROQ_API_KEY:
+        return jsonify({'error': 'Groq API key not configured. Set GROQ_API_KEY in config.py or environment.'}), 503
 
     data = request.get_json()
     if not data or not data.get('image'):
         return jsonify({'error': 'image (base64) is required'}), 400
 
     image_b64 = data['image']
-    # Strip data URI prefix if present (e.g. "data:image/jpeg;base64,...")
+    mime_type = data.get('mime_type', 'image/jpeg')
+    # Ensure we have the full data URI for Groq
     if ',' in image_b64:
-        image_b64 = image_b64.split(',', 1)[1]
+        data_uri = data['image']  # Already has prefix
+    else:
+        data_uri = f"data:{mime_type};base64,{image_b64}"
 
     prompt_text = """Analyze this plant image and identify the species. Return ONLY a valid JSON object (no markdown, no code fences) with these exact fields:
 {
@@ -902,50 +908,54 @@ def api_identify_plant():
   "ideal_soil_humidity_max": <number, soil moisture % maximum>,
   "ideal_temperature_min": <number, °C minimum>,
   "ideal_temperature_max": <number, °C maximum>,
-  "ideal_light_min": <number, lux minimum>,
-  "ideal_light_max": <number, lux maximum>,
+  "ideal_air_humidity_min": <number, air humidity % minimum>,
+  "ideal_air_humidity_max": <number, air humidity % maximum>,
   "water_duration": <number, watering seconds for a small pot>,
   "confidence": "high" or "medium" or "low"
 }
 Base ALL values on established horticultural and botanical science. Use realistic sensor-measurable ranges.
 If you cannot identify the plant, set confidence to "low" and use reasonable generic houseplant values."""
 
-    gemini_payload = {
-        "contents": [{
-            "parts": [
-                {"text": prompt_text},
+    groq_payload = {
+        "model": GROQ_VISION_MODEL,
+        "messages": [{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt_text},
                 {
-                    "inlineData": {
-                        "mimeType": data.get('mime_type', 'image/jpeg'),
-                        "data": image_b64
+                    "type": "image_url",
+                    "image_url": {
+                        "url": data_uri
                     }
                 }
             ]
         }],
-        "generationConfig": {
-            "temperature": 0.2,
-            "maxOutputTokens": 500
-        }
+        "temperature": 0.2,
+        "max_tokens": 500
     }
 
     try:
         resp = http_requests.post(
-            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
-            json=gemini_payload,
+            GROQ_API_URL,
+            json=groq_payload,
+            headers={
+                "Authorization": f"Bearer {GROQ_API_KEY}",
+                "Content-Type": "application/json"
+            },
             timeout=30
         )
         
         if resp.status_code != 200:
-            print(f"DEBUG: Gemini API Error Response: {resp.text}")
+            print(f"DEBUG: Groq API Error Response: {resp.text}")
             return jsonify({
-                'error': f'Gemini API error ({resp.status_code}): {resp.text}',
+                'error': f'Groq API error ({resp.status_code}): {resp.text}',
                 'status_code': resp.status_code
             }), resp.status_code
 
         result = resp.json()
 
-        # Extract text from Gemini response
-        text = result.get('candidates', [{}])[0].get('content', {}).get('parts', [{}])[0].get('text', '')
+        # Extract text from Groq response (OpenAI-compatible format)
+        text = result.get('choices', [{}])[0].get('message', {}).get('content', '')
 
         # Clean up: strip markdown code fences if present
         text = text.strip()
@@ -961,7 +971,7 @@ If you cannot identify the plant, set confidence to "low" and use reasonable gen
 
         # Validate required fields
         required = ['species', 'common_name', 'ideal_soil_humidity_min', 'ideal_soil_humidity_max',
-                    'ideal_temperature_min', 'ideal_temperature_max', 'ideal_light_min', 'ideal_light_max']
+                    'ideal_temperature_min', 'ideal_temperature_max', 'ideal_air_humidity_min', 'ideal_air_humidity_max']
         for field in required:
             if field not in plant_info:
                 plant_info[field] = None
@@ -969,9 +979,9 @@ If you cannot identify the plant, set confidence to "low" and use reasonable gen
         return jsonify(plant_info)
 
     except http_requests.exceptions.RequestException as e:
-        return jsonify({'error': f'Gemini API request failed: {str(e)}'}), 502
+        return jsonify({'error': f'Groq API request failed: {str(e)}'}), 502
     except (json_module.JSONDecodeError, KeyError, IndexError) as e:
-        return jsonify({'error': f'Could not parse Gemini response: {str(e)}', 'raw': text if 'text' in dir() else ''}), 502
+        return jsonify({'error': f'Could not parse Groq response: {str(e)}', 'raw': text if 'text' in dir() else ''}), 502
 
 
 # ==================== Run ====================

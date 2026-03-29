@@ -2,147 +2,238 @@
 
 {% block title %}Settings - Plant Monitor{% endblock %}
 
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
-<div class="page-header">
-    <h1>Plant Settings</h1>
-    <button id="add-plant-btn" class="btn btn-primary">
-        <span class="material-icons-outlined">add</span>
-        Add Plant
-    </button>
-</div>
-
-<!-- Plant Form Modal -->
-<div id="plant-modal" class="modal hidden">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2 id="modal-title">Add Plant</h2>
-            <button id="modal-close" class="btn-icon">
-                <span class="material-icons-outlined">close</span>
-            </button>
+<div class="settings-page">
+    <!-- Hero Header -->
+    <div class="settings-hero">
+        <div class="settings-hero-text">
+            <h1 class="settings-title">
+                <span class="material-icons-outlined settings-title-icon">tune</span>
+                Plant Settings
+            </h1>
         </div>
-        <form id="plant-form">
-            <input type="hidden" id="plant-id">
+        <button id="add-plant-btn" class="settings-add-btn">
+            <span class="material-icons-outlined">add_circle</span>
+            Add Plant
+        </button>
+    </div>
 
-            <div class="form-group">
-                <label for="plant-name">Plant Name *</label>
-                <input type="text" id="plant-name" required maxlength="100">
-            </div>
-            <div class="form-group">
-                <label for="plant-species-select">Species (3D Model)</label>
-                <select id="plant-species-select" class="form-select">
-                    <option value="">— Select a species —</option>
-                    <optgroup label="🌲 Trees">
-                        <option value="Pine" data-icon="🌲">🌲 Pine (Spruce, Fir, Cypress)</option>
-                        <option value="Palm" data-icon="🌴">🌴 Palm (Coconut, Tropical)</option>
-                        <option value="Oak" data-icon="🌳">🌳 Oak (Maple, Elm, Birch, Willow)</option>
-                        <option value="Cherry Blossom" data-icon="🌸">🌸 Cherry Blossom (Sakura, Plum, Peach)</option>
-                        <option value="Bamboo" data-icon="🎋">🎋 Bamboo (Reed, Grass)</option>
-                    </optgroup>
-                    <optgroup label="🌵 Plants">
-                        <option value="Cactus" data-icon="🌵">🌵 Cactus (Succulent, Aloe, Agave)</option>
-                        <option value="Flower" data-icon="🌺">🌺 Flower (Rose, Lily, Orchid, Tulip, Daisy)</option>
-                        <option value="Fern" data-icon="🌿">🌿 Fern (Moss, Ivy, Vine)</option>
-                    </optgroup>
-                    <optgroup label="✏️ Other">
-                        <option value="custom" data-icon="🌱">🌱 Custom (Name your own)</option>
-                    </optgroup>
-                </select>
-                <input type="text" id="plant-species-custom" maxlength="100" placeholder="Enter custom species name..." style="display:none; margin-top: 8px;">
-                <input type="hidden" id="plant-species">
-                <div id="species-3d-preview" class="species-preview" style="display:none;">
-                    <span id="species-preview-icon" class="species-preview-icon"></span>
-                    <span id="species-preview-text" class="species-preview-text"></span>
+    <!-- Plant Form Modal -->
+    <div id="plant-modal" class="set-modal hidden">
+        <div class="set-modal-content">
+            <!-- Modal Header -->
+            <div class="set-modal-header">
+                <div class="set-modal-header-left">
+                    <span class="material-icons-outlined set-modal-icon">eco</span>
+                    <h2 id="modal-title">Add Plant</h2>
                 </div>
-                <!-- AI Image Identification (Custom only) -->
-                <div id="custom-image-area" class="custom-image-area" style="display:none;">
-                    <div class="image-upload-header">
-                        <span class="material-icons-outlined" style="font-size:18px; color: var(--primary);">auto_awesome</span>
-                        <span>AI Plant Identification</span>
+                <button id="modal-close" class="set-modal-close">
+                    <span class="material-icons-outlined">close</span>
+                </button>
+            </div>
+
+            <form id="plant-form">
+                <input type="hidden" id="plant-id">
+
+                <!-- Section: Basic Info -->
+                <div class="set-section">
+                    <div class="set-section-header">
+                        <span class="material-icons-outlined">badge</span>
+                        <span>Basic Information</span>
                     </div>
-                    <p class="image-upload-hint">Take a photo or upload an image to auto-identify the species and fill ideal conditions.</p>
-                    <div class="image-upload-buttons">
-                        <label class="btn btn-secondary btn-sm image-upload-btn">
-                            <span class="material-icons-outlined" style="font-size:16px;">photo_camera</span>
-                            Take Photo
-                            <input type="file" id="plant-camera-input" accept="image/*" capture="environment" style="display:none;">
-                        </label>
-                        <label class="btn btn-secondary btn-sm image-upload-btn">
-                            <span class="material-icons-outlined" style="font-size:16px;">upload_file</span>
-                            Upload Image
-                            <input type="file" id="plant-image-input" accept="image/*" style="display:none;">
-                        </label>
+                    <div class="set-field">
+                        <label for="plant-name">Plant Name <span class="set-required">*</span></label>
+                        <div class="set-input-wrap">
+                            <span class="material-icons-outlined set-input-icon">local_florist</span>
+                            <input type="text" id="plant-name" required maxlength="100" placeholder="e.g. My Sakura">
+                        </div>
                     </div>
-                    <div id="image-preview" class="image-preview" style="display:none;">
-                        <img id="image-preview-img" alt="Plant photo preview">
+
+                    <div class="set-field">
+                        <label for="plant-species-select">Species (3D Model)</label>
+                        <select id="plant-species-select" class="set-select">
+                            <option value="">— Select a species —</option>
+                            <optgroup label="🌲 Trees">
+                                <option value="Pine" data-icon="🌲">🌲 Pine (Spruce, Fir, Cypress)</option>
+                                <option value="Palm" data-icon="🌴">🌴 Palm (Coconut, Tropical)</option>
+                                <option value="Oak" data-icon="🌳">🌳 Oak (Maple, Elm, Birch, Willow)</option>
+                                <option value="Cherry Blossom" data-icon="🌸">🌸 Cherry Blossom (Sakura, Plum, Peach)</option>
+                                <option value="Bamboo" data-icon="🎋">🎋 Bamboo (Reed, Grass)</option>
+                            </optgroup>
+                            <optgroup label="🌵 Plants">
+                                <option value="Cactus" data-icon="🌵">🌵 Cactus (Succulent, Aloe, Agave)</option>
+                                <option value="Flower" data-icon="🌺">🌺 Flower (Rose, Lily, Orchid, Tulip, Daisy)</option>
+                                <option value="Fern" data-icon="🌿">🌿 Fern (Moss, Ivy, Vine)</option>
+                            </optgroup>
+                            <optgroup label="✏️ Other">
+                                <option value="custom" data-icon="🌱">🌱 Custom (Name your own)</option>
+                            </optgroup>
+                        </select>
+                        <input type="text" id="plant-species-custom" maxlength="100" placeholder="Enter custom species name..." class="set-custom-species" style="display:none;">
+                        <input type="hidden" id="plant-species">
+                        <div id="species-3d-preview" class="set-species-preview" style="display:none;">
+                            <span id="species-preview-icon" class="set-species-icon"></span>
+                            <span id="species-preview-text" class="set-species-text"></span>
+                        </div>
                     </div>
-                    <div id="ai-status" class="ai-status" style="display:none;"></div>
-                    <div id="ai-result" class="ai-result" style="display:none;"></div>
+
+                    <!-- AI Image Identification (Custom only) -->
+                    <div id="custom-image-area" class="set-ai-area" style="display:none;">
+                        <div class="set-ai-header">
+                            <span class="material-icons-outlined">auto_awesome</span>
+                            <span>AI Plant Identification</span>
+                        </div>
+                        <p class="set-ai-hint">Take a photo or upload an image to auto-identify the species and fill ideal conditions.</p>
+                        <div class="set-ai-buttons">
+                            <label class="set-ai-btn">
+                                <span class="material-icons-outlined">photo_camera</span>
+                                Take Photo
+                                <input type="file" id="plant-camera-input" accept="image/*" capture="environment" style="display:none;">
+                            </label>
+                            <label class="set-ai-btn">
+                                <span class="material-icons-outlined">upload_file</span>
+                                Upload Image
+                                <input type="file" id="plant-image-input" accept="image/*" style="display:none;">
+                            </label>
+                        </div>
+                        <div id="image-preview" class="set-ai-preview" style="display:none;">
+                            <img id="image-preview-img" alt="Plant photo preview">
+                        </div>
+                        <div id="ai-status" class="ai-status" style="display:none;"></div>
+                        <div id="ai-result" class="ai-result" style="display:none;"></div>
+                    </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="plant-location">Location</label>
-                <input type="text" id="plant-location" maxlength="100" placeholder="e.g. Living room window">
-            </div>
-            <div class="form-group">
-                <label for="plant-esp32-ip">ESP32 IP Address</label>
-                <div class="input-with-btn">
-                    <input type="text" id="plant-esp32-ip" placeholder="10.175.88.158"
-                           pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" title="Enter a valid IP address (e.g. 10.175.88.158)">
-                    <button type="button" id="discover-esp32-btn" class="btn btn-secondary btn-sm">
-                        <span class="material-icons-outlined">search</span>
-                        Discover
+
+                <!-- Section: Location & Hardware -->
+                <div class="set-section">
+                    <div class="set-section-header">
+                        <span class="material-icons-outlined">router</span>
+                        <span>Location & Hardware</span>
+                    </div>
+                    <div class="set-field">
+                        <label for="plant-location">Location</label>
+                        <div class="set-input-wrap">
+                            <span class="material-icons-outlined set-input-icon">place</span>
+                            <input type="text" id="plant-location" maxlength="100" placeholder="e.g. Living room window">
+                        </div>
+                    </div>
+                    <div class="set-field">
+                        <label for="plant-esp32-ip">ESP32 IP Address</label>
+                        <div class="set-input-wrap set-input-with-btn">
+                            <span class="material-icons-outlined set-input-icon">lan</span>
+                            <input type="text" id="plant-esp32-ip" placeholder="10.175.88.158"
+                                   pattern="\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}" title="Enter a valid IP address">
+                            <button type="button" id="discover-esp32-btn" class="set-discover-btn">
+                                <span class="material-icons-outlined">search</span>
+                                Discover
+                            </button>
+                        </div>
+                        <div id="esp32-discover-results" class="discover-results hidden"></div>
+                    </div>
+                </div>
+
+                <!-- Section: Ideal Conditions -->
+                <div class="set-section">
+                    <div class="set-section-header">
+                        <span class="material-icons-outlined">science</span>
+                        <span>Ideal Conditions</span>
+                    </div>
+
+                    <div class="set-conditions-grid">
+                        <div class="set-condition-card">
+                            <div class="set-cond-icon-wrap set-cond-humidity">
+                                <span class="material-icons-outlined">water_drop</span>
+                            </div>
+                            <span class="set-cond-label">Soil Humidity (%)</span>
+                            <div class="set-cond-range">
+                                <div class="set-cond-input">
+                                    <span class="set-cond-tag">MIN</span>
+                                    <input type="number" id="humidity-min" value="30" min="0" max="100">
+                                </div>
+                                <span class="set-cond-sep">—</span>
+                                <div class="set-cond-input">
+                                    <span class="set-cond-tag">MAX</span>
+                                    <input type="number" id="humidity-max" value="70" min="0" max="100">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="set-condition-card">
+                            <div class="set-cond-icon-wrap set-cond-temp">
+                                <span class="material-icons-outlined">thermostat</span>
+                            </div>
+                            <span class="set-cond-label">Temperature (&deg;C)</span>
+                            <div class="set-cond-range">
+                                <div class="set-cond-input">
+                                    <span class="set-cond-tag">MIN</span>
+                                    <input type="number" id="temp-min" value="18" min="-20" max="60">
+                                </div>
+                                <span class="set-cond-sep">—</span>
+                                <div class="set-cond-input">
+                                    <span class="set-cond-tag">MAX</span>
+                                    <input type="number" id="temp-max" value="30" min="-20" max="60">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="set-condition-card">
+                            <div class="set-cond-icon-wrap set-cond-air">
+                                <span class="material-icons-outlined">air</span>
+                            </div>
+                            <span class="set-cond-label">Air Humidity (%)</span>
+                            <div class="set-cond-range">
+                                <div class="set-cond-input">
+                                    <span class="set-cond-tag">MIN</span>
+                                    <input type="number" id="air-humidity-min" value="40" min="0" max="100">
+                                </div>
+                                <span class="set-cond-sep">—</span>
+                                <div class="set-cond-input">
+                                    <span class="set-cond-tag">MAX</span>
+                                    <input type="number" id="air-humidity-max" value="80" min="0" max="100">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="set-condition-card">
+                            <div class="set-cond-icon-wrap set-cond-water">
+                                <span class="material-icons-outlined">shower</span>
+                            </div>
+                            <span class="set-cond-label">Water Duration</span>
+                            <div class="set-cond-range set-cond-single">
+                                <div class="set-cond-input">
+                                    <span class="set-cond-tag">SEC</span>
+                                    <input type="number" id="water-duration" value="5" min="1" max="60">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="set-actions">
+                    <button type="button" id="cancel-btn" class="set-btn-cancel">Cancel</button>
+                    <button type="submit" class="set-btn-save">
+                        <span class="material-icons-outlined">save</span>
+                        Save Plant
                     </button>
                 </div>
-                <div id="esp32-discover-results" class="discover-results hidden"></div>
-            </div>
-
-            <h3>Ideal Conditions</h3>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="humidity-min">Soil Humidity Min (%)</label>
-                    <input type="number" id="humidity-min" value="30" min="0" max="100">
-                </div>
-                <div class="form-group">
-                    <label for="humidity-max">Soil Humidity Max (%)</label>
-                    <input type="number" id="humidity-max" value="70" min="0" max="100">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="temp-min">Temperature Min (&deg;C)</label>
-                    <input type="number" id="temp-min" value="18" min="-20" max="60">
-                </div>
-                <div class="form-group">
-                    <label for="temp-max">Temperature Max (&deg;C)</label>
-                    <input type="number" id="temp-max" value="30" min="-20" max="60">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="air-humidity-min">Air Humidity Min (%)</label>
-                    <input type="number" id="air-humidity-min" value="40" min="0" max="100">
-                </div>
-                <div class="form-group">
-                    <label for="air-humidity-max">Air Humidity Max (%)</label>
-                    <input type="number" id="air-humidity-max" value="80" min="0" max="100">
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="water-duration">Water Duration (seconds)</label>
-                <input type="number" id="water-duration" value="5" min="1" max="60">
-            </div>
-
-            <div class="form-actions">
-                <button type="button" id="cancel-btn" class="btn btn-secondary">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save</button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- Plants List -->
-<div id="plants-list" class="plants-list">
-    <div class="loading">Loading plants...</div>
+    <!-- Plants List -->
+    <div class="settings-list-header">
+        <span class="material-icons-outlined">yard</span>
+        <span>Your Plants</span>
+    </div>
+    <div id="plants-list" class="set-plants-list">
+        <div class="loading">Loading plants...</div>
+    </div>
 </div>
 {% endblock %}
 

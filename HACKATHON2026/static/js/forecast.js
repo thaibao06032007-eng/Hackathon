@@ -125,7 +125,7 @@ async function loadPlantCare(plantId) {
         return;
     }
 
-    container.innerHTML = '<div class="card"><div class="loading">Loading plant care info from Perenual...</div></div>';
+    container.innerHTML = '<div class="card"><div class="loading">Loading plant care info...</div></div>';
     container.classList.remove('hidden');
 
     try {
