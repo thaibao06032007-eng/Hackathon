@@ -2,7 +2,7 @@
 
 # 🌱 Smart Plant Monitor
 
-### Hệ thống giám sát & tưới cây thông minh với ESP32 + AI
+### Intelligent Plant Monitoring & Auto-Watering System with ESP32 + AI
 
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10+-blue.svg)](https://python.org)
@@ -14,56 +14,56 @@
 
 <img src="https://img.icons8.com/color/200/potted-plant.png" alt="Plant Monitor" width="150"/>
 
-**Theo dõi nhiệt độ, độ ẩm đất & không khí theo thời gian thực.**  
-**Tự động tưới cây khi đất khô. Nhận diện cây bằng AI.**
+**Real-time monitoring of temperature, soil & air humidity.**  
+**Auto-waters plants when soil is dry. AI-powered plant identification.**
 
-[Tính năng](#-tính-năng) · [Công nghệ](#-công-nghệ) · [Cài đặt](#-cài-đặt) · [Sử dụng](#-sử-dụng) · [API](#-api-endpoints)
+[Features](#-features) · [Tech Stack](#-tech-stack) · [Installation](#-installation) · [Usage](#-usage) · [API](#-api-endpoints)
 
 </div>
 
 ---
 
-## 📸 Tổng quan
+## 📸 Overview
 
-Dự án **Smart Plant Monitor** kết hợp phần cứng ESP32 với ứng dụng web Flask để tạo ra hệ thống chăm sóc cây trồng hoàn chỉnh — từ giám sát cảm biến, điều khiển máy bơm, đến dự báo tưới nước dựa trên thời tiết và trí tuệ nhân tạo.
+**Smart Plant Monitor** combines ESP32 hardware with a Flask web application to create a complete plant care system — from sensor monitoring and pump control to AI-powered weather-based watering forecasts.
 
-## ✨ Tính năng
+## ✨ Features
 
-| Tính năng | Mô tả |
-|-----------|--------|
-| 📊 **Dashboard thời gian thực** | Hiển thị nhiệt độ, độ ẩm đất, độ ẩm không khí từ cảm biến ESP32 |
-| 💧 **Tự động tưới cây** | ESP32 tự kích hoạt bơm nước khi đất quá khô |
-| 🤖 **Nhận diện cây bằng AI** | Chụp ảnh → AI (Groq LLaMA Vision) nhận diện loài & đề xuất điều kiện lý tưởng |
-| 🌤️ **Dự báo tưới nước** | Kết hợp dữ liệu thời tiết 7 ngày (Open-Meteo) + đặc tính cây → lịch tưới thông minh |
-| 💬 **Chat thông báo** | Cây "nói chuyện" với bạn — cảnh báo khô, nóng, quá ẩm bằng tin nhắn dễ thương |
-| 📈 **Lịch sử dữ liệu** | Biểu đồ lịch sử cảm biến & sự kiện tưới nước |
-| 🔍 **Tra cứu chăm sóc** | AI tra cứu cách chăm sóc từng loài cây (tần suất tưới, ánh sáng, ...) |
-| 📱 **Responsive Web** | Giao diện web tương thích điện thoại & máy tính |
+| Feature | Description |
+|---------|-------------|
+| 📊 **Real-time Dashboard** | Displays temperature, soil moisture, and air humidity from ESP32 sensors |
+| 💧 **Auto Watering** | ESP32 automatically activates the water pump when soil is too dry |
+| 🤖 **AI Plant Identification** | Take a photo → AI (Groq LLaMA Vision) identifies species & suggests ideal conditions |
+| 🌤️ **Watering Forecast** | Combines 7-day weather data (Open-Meteo) + plant characteristics → smart watering schedule |
+| 💬 **Chat Notifications** | Your plant "talks" to you — alerts for dry soil, high temp, overwatering with friendly messages |
+| 📈 **Data History** | Historical charts of sensor data & watering events |
+| 🔍 **Care Lookup** | AI looks up care instructions for each species (watering frequency, sunlight, etc.) |
+| 📱 **Responsive Web** | Mobile & desktop friendly web interface |
 
-## 🛠 Công nghệ
+## 🛠 Tech Stack
 
-### Phần mềm
-| Thành phần | Công nghệ |
-|------------|-----------|
+### Software
+| Component | Technology |
+|-----------|------------|
 | Backend | **Python 3.10+**, Flask 3.0 |
 | Database | SQLite |
 | AI/LLM | Groq API (LLaMA 3.3 70B + LLaMA 4 Scout Vision) |
-| Thời tiết | Open-Meteo API (miễn phí, không cần key) |
+| Weather | Open-Meteo API (free, no key required) |
 | Frontend | HTML/CSS/JS, Material Icons |
 
-### Phần cứng
-| Linh kiện | Chức năng |
-|-----------|-----------|
-| **ESP32 Dev Module** | Vi điều khiển chính, kết nối WiFi |
-| **DHT11** | Đo nhiệt đô & độ ẩm không khí |
-| **Soil Moisture Sensor** | Đo độ ẩm đất (Analog) |
-| **Relay Module** | Điều khiển bơm nước (Active LOW) |
-| **Mini Water Pump** | Tưới cây tự động |
+### Hardware
+| Component | Function |
+|-----------|----------|
+| **ESP32 Dev Module** | Main microcontroller with WiFi connectivity |
+| **DHT11** | Measures temperature & air humidity |
+| **Soil Moisture Sensor** | Measures soil moisture (Analog) |
+| **Relay Module** | Controls water pump (Active LOW) |
+| **Mini Water Pump** | Automated plant watering |
 
-### Sơ đồ kết nối ESP32
+### ESP32 Wiring Diagram
 
 ```
-ESP32 Pin    →  Linh kiện
+ESP32 Pin    →  Component
 ─────────────────────────
 GPIO 4       →  DHT11 Signal
 GPIO 2       →  DHT11 VCC (Power Hack)
@@ -72,16 +72,16 @@ GPIO 34      →  Soil Moisture (Analog)
 GPIO 5       →  Relay IN (Active LOW)
 ```
 
-## 🚀 Cài đặt
+## 🚀 Installation
 
-### 1. Clone repository
+### 1. Clone the repository
 
 ```bash
 git clone https://github.com/thaibao06032007-eng/Hackathon.git
 cd Hackathon
 ```
 
-### 2. Tạo môi trường Python & cài dependencies
+### 2. Set up Python environment & install dependencies
 
 ```bash
 python -m venv .venv
@@ -95,96 +95,96 @@ source .venv/bin/activate
 pip install -r HACKATHON2026/requirements.txt
 ```
 
-### 3. Cấu hình API Key
+### 3. Configure API Key
 
-Tạo file `HACKATHON2026/.env`:
+Create file `HACKATHON2026/.env`:
 
 ```env
 GROQ_API_KEY=your_groq_api_key_here
 ```
 
-> 💡 Lấy API key miễn phí tại [console.groq.com](https://console.groq.com)
+> 💡 Get a free API key at [console.groq.com](https://console.groq.com)
 
-### 4. Chạy server
+### 4. Run the server
 
 ```bash
 cd HACKATHON2026
 python app.py
 ```
 
-Server sẽ chạy tại `http://localhost:5000`
+The server will start at `http://localhost:5000`
 
-### 5. Upload code ESP32
+### 5. Upload ESP32 firmware
 
-1. Mở `HACKATHON2026/arduino/esp32_plant_monitor.ino` bằng **Arduino IDE**
-2. Sửa WiFi credentials & Server URL trong code:
+1. Open `HACKATHON2026/arduino/esp32_plant_monitor.ino` in **Arduino IDE**
+2. Update WiFi credentials & Server URL in the code:
    ```cpp
    const char* ssid = "Your_WiFi_Name";
    const char* password = "Your_WiFi_Password";
    const char* SERVER_URL = "http://YOUR_PC_IP:5000/api/sensor-data";
    ```
-3. Cài thư viện: **ArduinoJson**, **DHT sensor library (Adafruit)**, **Adafruit Unified Sensor**
-4. Chọn Board: **ESP32 Dev Module** → Upload
+3. Install libraries: **ArduinoJson**, **DHT sensor library (Adafruit)**, **Adafruit Unified Sensor**
+4. Select Board: **ESP32 Dev Module** → Upload
 
-## 📖 Sử dụng
+## 📖 Usage
 
-| Trang | URL | Chức năng |
-|-------|-----|-----------|
-| Dashboard | `/` | Tổng quan tất cả cây |
-| Chi tiết cây | `/plant/<id>` | Dữ liệu chi tiết + chat + điều khiển bơm |
-| Lịch sử | `/history` | Biểu đồ lịch sử cảm biến |
-| Dự báo | `/forecast` | Dự báo thời tiết & lịch tưới 7 ngày |
-| Cài đặt | `/settings` | Thêm/sửa/xóa cây, cấu hình ESP32 |
-| AR View | `/ar` | Xem cây qua camera (thử nghiệm) |
+| Page | URL | Function |
+|------|-----|----------|
+| Dashboard | `/` | Overview of all plants |
+| Plant Detail | `/plant/<id>` | Detailed data + chat + pump control |
+| History | `/history` | Sensor history charts |
+| Forecast | `/forecast` | 7-day weather forecast & watering schedule |
+| Settings | `/settings` | Add/edit/delete plants, configure ESP32 |
+| AR View | `/ar` | View plant via camera (experimental) |
 
 ## 📡 API Endpoints
 
 <details>
-<summary><b>Xem tất cả API (click để mở)</b></summary>
+<summary><b>View all API endpoints (click to expand)</b></summary>
 
 ### Plants CRUD
-| Method | Endpoint | Mô tả |
-|--------|----------|--------|
-| `GET` | `/api/plants` | Lấy danh sách tất cả cây |
-| `GET` | `/api/plants/<id>` | Lấy thông tin 1 cây |
-| `POST` | `/api/plants` | Thêm cây mới |
-| `PUT` | `/api/plants/<id>` | Cập nhật cây |
-| `DELETE` | `/api/plants/<id>` | Xóa cây |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/plants` | Get all plants |
+| `GET` | `/api/plants/<id>` | Get a single plant |
+| `POST` | `/api/plants` | Create a new plant |
+| `PUT` | `/api/plants/<id>` | Update a plant |
+| `DELETE` | `/api/plants/<id>` | Delete a plant |
 
 ### Sensor & Control
-| Method | Endpoint | Mô tả |
-|--------|----------|--------|
-| `POST` | `/api/sensor-data` | ESP32 gửi dữ liệu cảm biến |
-| `GET` | `/api/plants/<id>/history` | Lịch sử cảm biến |
-| `GET` | `/api/plants/<id>/health` | Điểm sức khỏe cây |
-| `POST` | `/api/plants/<id>/water` | Điều khiển tưới nước |
-| `POST` | `/api/plants/<id>/auto-water` | Bật/tắt tưới tự động |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/sensor-data` | ESP32 sends sensor readings |
+| `GET` | `/api/plants/<id>/history` | Sensor data history |
+| `GET` | `/api/plants/<id>/health` | Plant health score |
+| `POST` | `/api/plants/<id>/water` | Trigger manual watering |
+| `POST` | `/api/plants/<id>/auto-water` | Toggle auto-watering |
 
 ### AI & Weather
-| Method | Endpoint | Mô tả |
-|--------|----------|--------|
-| `POST` | `/api/identify-plant` | Nhận diện cây qua ảnh (AI Vision) |
-| `GET` | `/api/plant-care/<id>` | Tra cứu chăm sóc cây (AI) |
-| `GET` | `/api/forecast` | Dự báo thời tiết + lịch tưới |
-| `GET` | `/api/geocode` | Tìm kiếm vị trí |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/identify-plant` | Identify plant from image (AI Vision) |
+| `GET` | `/api/plant-care/<id>` | Look up plant care info (AI) |
+| `GET` | `/api/forecast` | Weather forecast + watering plan |
+| `GET` | `/api/geocode` | Location search |
 
 ### ESP32
-| Method | Endpoint | Mô tả |
-|--------|----------|--------|
-| `POST` | `/api/esp32/register` | ESP32 đăng ký IP |
-| `GET` | `/api/esp32/discover` | Danh sách ESP32 đã kết nối |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/esp32/register` | ESP32 registers its IP |
+| `GET` | `/api/esp32/discover` | List connected ESP32 devices |
 
 </details>
 
-## 📁 Cấu trúc dự án
+## 📁 Project Structure
 
 ```
 HACKATHON2026/
-├── app.py                 # Flask server chính
-├── config.py              # Cấu hình (API keys, DB path)
+├── app.py                 # Main Flask server
+├── config.py              # Configuration (API keys, DB path)
 ├── database.py            # SQLite CRUD operations
 ├── requirements.txt       # Python dependencies
-├── .env                   # API keys (không push lên git)
+├── .env                   # API keys (not pushed to git)
 ├── arduino/
 │   ├── esp32_plant_monitor.ino   # Arduino IDE code
 │   ├── platformio.ini            # PlatformIO config
@@ -209,13 +209,13 @@ HACKATHON2026/
     └── ar.html
 ```
 
-## 🤝 Đóng góp
+## 🤝 Contributing
 
-1. Fork repo
-2. Tạo branch: `git checkout -b feature/ten-tinh-nang`
-3. Commit: `git commit -m "Add: tính năng mới"`
-4. Push: `git push origin feature/ten-tinh-nang`
-5. Tạo Pull Request
+1. Fork the repo
+2. Create a branch: `git checkout -b feature/feature-name`
+3. Commit: `git commit -m "Add: new feature"`
+4. Push: `git push origin feature/feature-name`
+5. Open a Pull Request
 
 ## 📄 License
 
