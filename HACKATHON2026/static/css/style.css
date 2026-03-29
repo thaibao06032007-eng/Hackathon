@@ -826,6 +826,480 @@ body {
     margin-bottom: 16px;
 }
 
+/* ==================== Forecast Page ==================== */
+.forecast-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.forecast-location {
+    margin-bottom: 0;
+}
+
+.location-form {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.location-form .material-icons-outlined {
+    color: var(--primary);
+    font-size: 22px;
+}
+
+.location-search-wrapper {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.location-search-wrapper .input-field {
+    width: 100%;
+}
+
+.location-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    z-index: 50;
+    margin-top: 4px;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text);
+    transition: background 0.15s;
+}
+
+.dropdown-item:hover {
+    background: var(--primary-bg);
+}
+
+.dropdown-item .material-icons-outlined {
+    font-size: 18px;
+    color: var(--primary-lighter);
+}
+
+.dropdown-item.no-result {
+    cursor: default;
+    color: var(--text-secondary);
+    justify-content: center;
+}
+
+.dropdown-item.no-result:hover {
+    background: none;
+}
+
+.current-location {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--primary);
+    white-space: nowrap;
+}
+
+.location-form label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.input-sm {
+    width: 120px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+}
+
+/* Plant Selector */
+.forecast-plant-selector {
+    padding: 16px 20px;
+}
+
+.selector-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.selector-header .material-icons-outlined {
+    font-size: 20px;
+    color: var(--primary);
+}
+
+.selector-label {
+    font-weight: 500;
+}
+
+.plant-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.plant-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--card-bg);
+    cursor: pointer;
+    font-family: var(--font);
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.plant-tab:hover {
+    border-color: var(--primary-lighter);
+    color: var(--primary);
+}
+
+.plant-tab.active {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
+.plant-tab .material-icons-outlined {
+    font-size: 18px;
+}
+
+.plant-tab small {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.plant-tab.active small {
+    color: var(--primary-light);
+}
+
+.no-plants {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Care Info Card */
+.care-card {
+    margin-bottom: 20px;
+}
+
+.care-card-inner {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.care-image {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    flex-shrink: 0;
+}
+
+.care-details h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 2px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.care-scientific {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: 10px;
+}
+
+.care-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.care-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--bg);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.care-tag .material-icons-outlined {
+    font-size: 16px;
+    color: var(--primary-lighter);
+}
+
+.care-desc {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.care-error {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.care-error .material-icons-outlined {
+    font-size: 20px;
+    color: var(--warning);
+}
+
+/* Care Summary Badges */
+.care-summary {
+    display: flex;
+    gap: 8px;
+}
+
+.care-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: var(--primary-bg);
+    border-radius: 20px;
+    font-size: 0.8rem;
+    color: var(--primary);
+    font-weight: 500;
+}
+
+.care-badge .material-icons-outlined {
+    font-size: 16px;
+}
+
+.forecast-weather-strip {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.weather-day-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 16px 12px;
+    text-align: center;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.weather-day-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.weather-icon {
+    font-size: 32px;
+    color: var(--warning);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.weather-desc {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.weather-temps {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+}
+
+.temp-max {
+    font-weight: 600;
+    color: var(--danger);
+}
+
+.temp-min {
+    color: var(--text-secondary);
+}
+
+.weather-detail {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.weather-detail .material-icons-outlined {
+    font-size: 14px;
+}
+
+/* Forecast Plant Cards */
+.forecast-plant-card {
+    margin-bottom: 16px;
+}
+
+.forecast-plant-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.forecast-plant-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.forecast-plant-species {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.forecast-schedule {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.forecast-day {
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    padding: 12px 8px;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.forecast-day.water-normal {
+    border-color: var(--primary-lighter);
+    background: var(--primary-bg);
+}
+
+.forecast-day.water-extra {
+    border-color: #0288d1;
+    background: #e1f5fe;
+}
+
+.forecast-day.water-light {
+    border-color: var(--primary-lightest);
+    background: #f0faf3;
+}
+
+.forecast-day.water-none {
+    border-color: var(--border);
+    background: #f9fafb;
+    opacity: 0.7;
+}
+
+.forecast-day-date {
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text);
+}
+
+.forecast-day-weather {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.forecast-day-weather .material-icons-outlined {
+    font-size: 16px;
+}
+
+.forecast-day-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-bottom: 4px;
+}
+
+.forecast-day-action .material-icons-outlined {
+    font-size: 20px;
+}
+
+.water-normal .forecast-day-action {
+    color: var(--primary);
+}
+
+.water-extra .forecast-day-action {
+    color: #0288d1;
+}
+
+.water-light .forecast-day-action {
+    color: var(--primary-lightest);
+}
+
+.water-none .forecast-day-action {
+    color: var(--text-secondary);
+}
+
+.water-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.forecast-day-duration {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+}
+
+.forecast-day-reasons {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.reason-tag {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.7);
+    padding: 2px 6px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
 /* ==================== Responsive ==================== */
 @media (max-width: 768px) {
     .nav-links {
@@ -880,5 +1354,43 @@ body {
     .plant-list-actions {
         width: 100%;
         justify-content: center;
+    }
+
+    .forecast-weather-strip {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .forecast-schedule {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .location-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .location-search-wrapper {
+        max-width: 100%;
+    }
+
+    .care-card-inner {
+        flex-direction: column;
+    }
+
+    .care-image {
+        width: 100%;
+        height: 160px;
+    }
+
+    .plant-tabs {
+        flex-direction: column;
+    }
+
+    .care-summary {
+        flex-direction: column;
+    }
+
+    .input-sm {
+        width: 100%;
     }
 }

@@ -29,6 +29,10 @@
                 <span class="material-icons-outlined">view_in_ar</span>
                 <span class="nav-label">AR View</span>
             </a>
+            <a href="/forecast" class="nav-link {% if request.endpoint == 'forecast' %}active{% endif %}">
+                <span class="material-icons-outlined">water_drop</span>
+                <span class="nav-label">Forecast</span>
+            </a>
             <a href="/settings" class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}">
                 <span class="material-icons-outlined">settings</span>
                 <span class="nav-label">Settings</span>

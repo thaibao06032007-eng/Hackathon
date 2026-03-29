@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AR View - Plant Monitor</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/suncalc/1.9.0/suncalc.min.js"></script>
+    <style>
+        :root {
+            --primary: #2d6a4f;
+            --primary-light: #40916c;
+            --primary-lighter: #52b788;
+            --primary-lightest: #95d5b2;
+            --primary-bg: #d8f3dc;
+            --danger: #e63946;
+            --warning: #f4a261;
+            --bg: #f5f7f5;
+            --card-bg: #ffffff;
+            --text: #1a1a2e;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+            --radius-sm: 8px;
+            --nav-height: 64px;
+            --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: var(--font);
+            background: #1a2332;
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Navbar - matching main site */
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--nav-height);
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center;
+            padding: 0 24px; z-index: 100;
+            box-shadow: var(--shadow);
+        }
+        .nav-brand {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 1.25rem; font-weight: 600;
+            color: var(--primary); margin-right: 48px;
+            text-decoration: none;
+        }
+        .nav-brand .material-icons-outlined { font-size: 28px; }
+        .nav-links { display: flex; gap: 4px; }
+        .nav-link {
+            display: flex; align-items: center; gap: 6px;
+            padding: 8px 16px; text-decoration: none;
+            color: var(--text-secondary); border-radius: var(--radius-sm);
+            font-size: 0.9rem; font-weight: 500; transition: all 0.2s;
+        }
+        .nav-link:hover { background: var(--primary-bg); color: var(--primary); }
+        .nav-link.active { background: var(--primary); color: white; }
+        .nav-link .material-icons-outlined { font-size: 20px; }
+
+        /* AR Content Area */
+        #ar-canvas-container {
+            position: fixed; top: var(--nav-height); left: 0; right: 0; bottom: 0;
+        }
+
+        /* Info Panel */
+        #info-panel {
+            position: fixed; top: calc(var(--nav-height) + 12px); left: 12px;
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            padding: 16px; border-radius: var(--radius);
+            font-size: 0.85rem; z-index: 10;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            max-width: 320px;
+            color: var(--text);
+        }
+        #info-panel .panel-title {
+            font-weight: 600; font-size: 0.9rem;
+            color: var(--primary); margin-bottom: 8px;
+            display: flex; align-items: center; gap: 6px;
+        }
+        #info-panel .panel-row {
+            display: flex; justify-content: space-between;
+            padding: 3px 0; color: var(--text-secondary); font-size: 0.8rem;
+        }
+        #info-panel .panel-row span:last-child { font-weight: 600; color: var(--text); }
+        .dim-badge {
+            background: var(--primary-bg); color: var(--primary);
+            padding: 3px 8px; border-radius: 6px;
+            font-family: monospace; font-size: 0.75rem; font-weight: 600;
+            margin-right: 4px; border: 1px solid var(--primary-lightest);
+        }
+        #compass-btn {
+            background: var(--primary); color: white;
+            padding: 8px 14px; border-radius: var(--radius-sm);
+            font-weight: 600; font-size: 0.85rem; font-family: var(--font);
+            margin-top: 10px; cursor: pointer;
+            border: none; width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            transition: background 0.2s;
+        }
+        #compass-btn:hover { background: var(--primary-light); }
+
+        /* Bottom Controls */
+        #ui-container {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            padding: 16px 20px 24px;
+            background: linear-gradient(to top, rgba(255,255,255,0.95) 60%, rgba(255,255,255,0));
+            backdrop-filter: blur(8px);
+            z-index: 10; pointer-events: none;
+        }
+        .ar-mode #ui-container { padding-bottom: 80px; }
+        .control-group {
+            pointer-events: auto; margin-bottom: 12px;
+            background: var(--card-bg); padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow); border: 1px solid var(--border);
+        }
+        .control-group label {
+            color: var(--text); display: flex; align-items: center; gap: 6px;
+            margin-bottom: 6px; font-weight: 500; font-size: 0.85rem;
+        }
+        .control-group label .material-icons-outlined { font-size: 18px; color: var(--primary-lighter); }
+        .control-value { font-weight: 700; color: var(--primary); }
+        input[type=range] {
+            width: 100%; accent-color: var(--primary);
+            pointer-events: auto; touch-action: pan-x;
+            height: 6px; cursor: pointer;
+        }
+        #desktop-hint {
+            position: fixed; top: calc(var(--nav-height) + 100px);
+            left: 50%; transform: translateX(-50%);
+            text-align: center; color: var(--text-secondary);
+            pointer-events: none; font-size: 0.85rem; z-index: 5;
+            background: rgba(255,255,255,0.9); padding: 12px 20px;
+            border-radius: var(--radius-sm); box-shadow: var(--shadow);
+        }
+        #ar-hint {
+            font-size: 0.8rem; color: var(--text-secondary);
+            margin-top: 8px; text-align: center;
+            background: var(--primary-bg); padding: 8px 12px;
+            border-radius: var(--radius-sm);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-label { display: none; }
+            .nav-brand span:not(.material-icons-outlined) { display: none; }
+            .nav-brand { margin-right: 16px; }
+            #info-panel { left: 8px; right: 8px; max-width: none; font-size: 0.8rem; }
+        }
+    </style>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+
+    <!-- Navbar matching main site -->
+    <nav class="navbar">
+        <a href="/" class="nav-brand">
+            <span class="material-icons-outlined">eco</span>
+            <span>Plant Monitor</span>
+        </a>
+        <div class="nav-links">
+            <a href="/" class="nav-link">
+                <span class="material-icons-outlined">dashboard</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="/history" class="nav-link">
+                <span class="material-icons-outlined">timeline</span>
+                <span class="nav-label">History</span>
+            </a>
+            <a href="/ar" class="nav-link active">
+                <span class="material-icons-outlined">view_in_ar</span>
+                <span class="nav-label">AR View</span>
+            </a>
+            <a href="/forecast" class="nav-link">
+                <span class="material-icons-outlined">water_drop</span>
+                <span class="nav-label">Forecast</span>
+            </a>
+            <a href="/settings" class="nav-link">
+                <span class="material-icons-outlined">settings</span>
+                <span class="nav-label">Settings</span>
+            </a>
+        </div>
+    </nav>
+
+    <div id="ar-canvas-container"></div>
+
+    <!-- Info Panel -->
+    <div id="info-panel">
+        <div class="panel-title">
+            <span class="material-icons-outlined">wb_sunny</span>
+            Sunlight Data
+            <span id="loading-gps" style="font-size:0.7rem; color:var(--warning); font-weight:400; margin-left:auto;">(Locating...)</span>
+        </div>
+        <div class="panel-row"><span>Coordinates</span><span id="loc-display">Loading...</span></div>
+        <div class="panel-row"><span>Compass</span><span id="compass-display" style="color:#3b82f6;">Not Granted</span></div>
+        <div class="panel-row"><span>Simulated Time</span><span id="time-display" style="font-size:1.1rem; color:var(--warning);">12:00</span></div>
+
+        <div class="panel-title" style="margin-top:10px;">
+            <span class="material-icons-outlined">straighten</span>
+            3D Dimensions
+        </div>
+        <div style="display:flex; margin-top:4px; flex-wrap:wrap; gap:4px;">
+            <span class="dim-badge">W: <span id="dim-x">0.00</span>m</span>
+            <span class="dim-badge">H: <span id="dim-y">0.00</span>m</span>
+            <span class="dim-badge">D: <span id="dim-z">0.00</span>m</span>
+        </div>
+
+        <button id="compass-btn">
+            <span class="material-icons-outlined">explore</span>
+            Enable Compass (Required for iOS)
+        </button>
+        <div id="ar-hint" class="hidden" style="font-size:0.75rem; color:var(--text-secondary); margin-top:8px; text-align:center; background:var(--primary-bg); padding:6px 10px; border-radius:6px;">
+            Tap the reticle to place the tree. Look up to see the sun path.
+        </div>
+    </div>
+
+    <div id="desktop-hint">
+        <span class="material-icons-outlined" style="font-size:20px; vertical-align:middle;">mouse</span>
+        Use your mouse to rotate/zoom the 3D view.<br>
+        Open on a mobile device to experience AR.
+    </div>
+
+    <!-- Controls -->
+    <div id="ui-container">
+        <div class="control-group">
+            <label>
+                <span class="material-icons-outlined">park</span>
+                Tree Age: <span id="ageVal" class="control-value">1</span> years
+            </label>
+            <input type="range" id="ageSlider" min="1" max="50" value="1" step="1">
+        </div>
+        <div class="control-group">
+            <label>
+                <span class="material-icons-outlined">schedule</span>
+                Time of Day: <span id="timeVal" class="control-value">12:00</span>
+            </label>
+            <input type="range" id="timeSlider" min="5" max="19" value="12" step="0.05">
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { ARButton } from 'three/addons/webxr/ARButton.js';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- GLOBAL VARIABLES ---
+        let container;
+        let camera, scene, renderer, controls;
+        let controller, reticle;
+        let hitTestSource = null;
+        let hitTestSourceRequested = false;
+
+        let treeModel = null;
+        let shadowPlane = null;
+        let gridHelper = null;
+
+        let arAnchorGroup;
+        let treeBoxHelper;
+        let labelW, labelH, labelD;
+
+        let skyGroup;
+        let lightGroup;
+
+        let sunLight, sunSphere, sunPathTube;
+        let userLat = 16.0544, userLng = 108.2022; // Default Da Nang
+        let simulationDate = new Date();
+
+        const SKY_RADIUS = 50;
+        const LIGHT_RADIUS = 10;
+
+        let compassHeading = 0;
+        let isCompassActive = false;
+
+        const ageSlider = document.getElementById('ageSlider');
+        const timeSlider = document.getElementById('timeSlider');
+        const timeDisplay = document.getElementById('time-display');
+
+        init();
+        animate();
+
+        function init() {
+            container = document.getElementById('ar-canvas-container');
+
+            scene = new THREE.Scene();
+
+            arAnchorGroup = new THREE.Group();
+            scene.add(arAnchorGroup);
+
+            skyGroup = new THREE.Group();
+            scene.add(skyGroup);
+
+            lightGroup = new THREE.Group();
+            scene.add(lightGroup);
+
+            camera = new THREE.PerspectiveCamera(70, window.innerWidth / (window.innerHeight - 64), 0.01, 1000);
+            camera.position.set(0, 1.5, 3);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+            scene.add(ambientLight);
+
+            sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
+            sunLight.castShadow = true;
+            sunLight.shadow.mapSize.width = 1024;
+            sunLight.shadow.mapSize.height = 1024;
+            sunLight.shadow.camera.near = 0.5;
+            sunLight.shadow.camera.far = 20;
+            sunLight.shadow.camera.left = -5;
+            sunLight.shadow.camera.right = 5;
+            sunLight.shadow.camera.top = 5;
+            sunLight.shadow.camera.bottom = -5;
+            sunLight.shadow.bias = -0.001;
+            lightGroup.add(sunLight);
+            lightGroup.add(sunLight.target);
+            sunLight.target.position.set(0, 0, 0);
+
+            const sunGeo = new THREE.SphereGeometry(2, 32, 32);
+            const sunMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            sunSphere = new THREE.Mesh(sunGeo, sunMat);
+            skyGroup.add(sunSphere);
+
+            const planeGeo = new THREE.PlaneGeometry(20, 20);
+            planeGeo.rotateX(-Math.PI / 2);
+            const shadowMaterial = new THREE.MeshStandardMaterial({ color: 0x556b2f, roughness: 0.8 });
+            shadowPlane = new THREE.Mesh(planeGeo, shadowMaterial);
+            shadowPlane.receiveShadow = true;
+            arAnchorGroup.add(shadowPlane);
+
+            gridHelper = new THREE.GridHelper(20, 20, 0x000000, 0x000000);
+            gridHelper.material.opacity = 0.2;
+            gridHelper.material.transparent = true;
+            arAnchorGroup.add(gridHelper);
+
+            treeModel = createProceduralTree();
+            arAnchorGroup.add(treeModel);
+
+            treeBoxHelper = new THREE.BoxHelper(treeModel, 0x2d6a4f);
+            arAnchorGroup.add(treeBoxHelper);
+
+            labelW = createDimSprite();
+            labelH = createDimSprite();
+            labelD = createDimSprite();
+            arAnchorGroup.add(labelW);
+            arAnchorGroup.add(labelH);
+            arAnchorGroup.add(labelD);
+
+            updateTreeDimensions();
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(window.innerWidth, window.innerHeight - 64);
+            renderer.xr.enabled = true;
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            container.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.target.set(0, 0.5, 0);
+            controls.update();
+
+            const arButton = ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] });
+            document.body.appendChild(arButton);
+
+            renderer.xr.addEventListener('sessionstart', () => {
+                document.body.classList.add('ar-mode');
+                document.getElementById('desktop-hint').style.display = 'none';
+                document.getElementById('ar-hint').classList.remove('hidden');
+                document.getElementById('compass-btn').style.display = 'none';
+                document.querySelector('.navbar').style.display = 'none';
+
+                gridHelper.visible = false;
+                shadowPlane.material = new THREE.ShadowMaterial({ opacity: 0.5 });
+                arAnchorGroup.visible = false;
+
+                if (isCompassActive) {
+                    const rad = THREE.MathUtils.degToRad(compassHeading);
+                    skyGroup.rotation.y = rad;
+                    lightGroup.rotation.y = rad;
+                }
+            });
+
+            renderer.xr.addEventListener('sessionend', () => {
+                document.body.classList.remove('ar-mode');
+                document.getElementById('desktop-hint').style.display = 'block';
+                document.getElementById('ar-hint').classList.add('hidden');
+                document.querySelector('.navbar').style.display = 'flex';
+
+                gridHelper.visible = true;
+                shadowPlane.material = new THREE.MeshStandardMaterial({ color: 0x556b2f, roughness: 0.8 });
+                arAnchorGroup.position.set(0, 0, 0);
+                arAnchorGroup.visible = true;
+
+                skyGroup.rotation.y = 0;
+                lightGroup.rotation.y = 0;
+
+                camera.position.set(0, 1.5, 3);
+                camera.updateProjectionMatrix();
+                if (controls) {
+                    controls.target.set(0, 0.5, 0);
+                    controls.update();
+                }
+                onWindowResize();
+                updateSunPosition();
+            });
+
+            controller = renderer.xr.getController(0);
+            controller.addEventListener('select', onSelect);
+            scene.add(controller);
+
+            reticle = new THREE.Mesh(
+                new THREE.RingGeometry(0.15, 0.2, 32).rotateX(-Math.PI / 2),
+                new THREE.MeshBasicMaterial({ color: 0x2d6a4f })
+            );
+            reticle.matrixAutoUpdate = false;
+            reticle.visible = false;
+            scene.add(reticle);
+
+            setupUIEvents();
+            setupCompass();
+            getLocationAndInitSun();
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function setupCompass() {
+            const btn = document.getElementById('compass-btn');
+
+            const handleOrientation = (event) => {
+                let heading = null;
+                if (event.webkitCompassHeading !== undefined) {
+                    heading = event.webkitCompassHeading;
+                } else if (event.absolute === true && event.alpha !== null) {
+                    heading = 360 - event.alpha;
+                }
+
+                if (heading !== null) {
+                    compassHeading = heading;
+                    isCompassActive = true;
+                    document.getElementById('compass-display').innerText = Math.round(heading) + '°';
+                    btn.style.display = 'none';
+                }
+            };
+
+            btn.addEventListener('click', () => {
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission().then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation, true);
+                        } else {
+                            // Show inline message instead of alert
+                            document.getElementById('compass-display').innerText = 'Denied';
+                            document.getElementById('compass-display').style.color = '#e63946';
+                            btn.innerHTML = '<span class="material-icons-outlined">explore_off</span> Compass unavailable (requires HTTPS)';
+                            btn.style.background = '#6b7280';
+                            btn.style.cursor = 'default';
+                            btn.disabled = true;
+                        }
+                    }).catch(() => {
+                        document.getElementById('compass-display').innerText = 'Unavailable';
+                        document.getElementById('compass-display').style.color = '#f4a261';
+                        btn.innerHTML = '<span class="material-icons-outlined">explore_off</span> Compass unavailable (requires HTTPS)';
+                        btn.style.background = '#6b7280';
+                        btn.style.cursor = 'default';
+                        btn.disabled = true;
+                    });
+                } else {
+                    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+                    window.addEventListener('deviceorientation', handleOrientation, true);
+                }
+            });
+
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission !== 'function') {
+                window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+                window.addEventListener('deviceorientation', handleOrientation, true);
+            }
+        }
+
+        function updateTreeDimensions() {
+            if (!treeModel || !treeBoxHelper) return;
+            treeBoxHelper.update();
+            const box = new THREE.Box3().setFromObject(treeModel);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+
+            document.getElementById('dim-x').innerText = size.x.toFixed(2);
+            document.getElementById('dim-y').innerText = size.y.toFixed(2);
+            document.getElementById('dim-z').innerText = size.z.toFixed(2);
+
+            if (labelW && labelH && labelD) {
+                updateLabelSprite(labelW, `W: ${size.x.toFixed(2)}m`);
+                updateLabelSprite(labelH, `H: ${size.y.toFixed(2)}m`);
+                updateLabelSprite(labelD, `D: ${size.z.toFixed(2)}m`);
+
+                labelW.position.set(0, 0.05, size.z / 2 + 0.1);
+                labelH.position.set(size.x / 2 + 0.1, size.y / 2, 0);
+                labelD.position.set(size.x / 2 + 0.1, 0.05, size.z / 2);
+            }
+        }
+
+        function createDimSprite() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 64;
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.minFilter = THREE.LinearFilter;
+            const material = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true });
+            const sprite = new THREE.Sprite(material);
+            sprite.scale.set(0.6, 0.15, 1);
+            sprite.renderOrder = 999;
+            return sprite;
+        }
+
+        function updateLabelSprite(sprite, message) {
+            const canvas = sprite.material.map.image;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = 'rgba(45, 106, 79, 0.85)';
+            if (ctx.roundRect) {
+                ctx.roundRect(10, 10, 236, 44, 8);
+            } else {
+                ctx.fillRect(10, 10, 236, 44);
+            }
+            ctx.fill();
+
+            ctx.font = 'bold 26px monospace';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(message, 128, 32);
+
+            sprite.material.map.needsUpdate = true;
+        }
+
+        function createTextSprite(message) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = 'rgba(45, 106, 79, 0.8)';
+            if (ctx.roundRect) {
+                ctx.roundRect(28, 28, 200, 72, 16);
+            } else {
+                ctx.fillRect(28, 28, 200, 72);
+            }
+            ctx.fill();
+
+            ctx.font = 'bold 44px sans-serif';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(message, 128, 64);
+
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, depthTest: false, transparent: true });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(10, 5, 1);
+            return sprite;
+        }
+
+        function createProceduralTree() {
+            const group = new THREE.Group();
+            const trunkGeo = new THREE.CylinderGeometry(0.04, 0.08, 0.5, 8);
+            const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5c4033 });
+            const trunk = new THREE.Mesh(trunkGeo, trunkMat);
+            trunk.position.y = 0.25;
+            trunk.castShadow = true;
+            trunk.receiveShadow = true;
+            group.add(trunk);
+
+            const leavesMat = new THREE.MeshLambertMaterial({ color: 0x2d6a4f });
+            for (let i = 0; i < 3; i++) {
+                const leavesGeo = new THREE.ConeGeometry(0.3 - (i * 0.06), 0.5, 8);
+                const leaves = new THREE.Mesh(leavesGeo, leavesMat);
+                leaves.position.y = 0.5 + (i * 0.25);
+                leaves.castShadow = true;
+                leaves.receiveShadow = true;
+                group.add(leaves);
+            }
+            return group;
+        }
+
+        function onSelect() {
+            if (reticle.visible) {
+                arAnchorGroup.visible = true;
+                arAnchorGroup.position.setFromMatrixPosition(reticle.matrix);
+            }
+        }
+
+        function setupUIEvents() {
+            const now = new Date();
+            let currentHour = now.getHours() + (now.getMinutes() / 60);
+            if (currentHour < 5 || currentHour > 19) {
+                currentHour = 12;
+            }
+            timeSlider.value = currentHour;
+
+            const updateTimeDisplay = (val) => {
+                const hours = Math.floor(val);
+                const mins = Math.floor((val - hours) * 60);
+                const timeStr = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+                document.getElementById('timeVal').innerText = timeStr;
+                timeDisplay.innerText = timeStr;
+                simulationDate.setHours(hours);
+                simulationDate.setMinutes(mins);
+            };
+
+            updateTimeDisplay(currentHour);
+
+            ageSlider.addEventListener('input', (e) => {
+                const age = parseFloat(e.target.value);
+                document.getElementById('ageVal').innerText = age;
+                if (treeModel) {
+                    const scaleFactor = 1 + (age * 0.08);
+                    treeModel.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                    updateTreeDimensions();
+                }
+            });
+
+            timeSlider.addEventListener('input', (e) => {
+                updateTimeDisplay(parseFloat(e.target.value));
+                updateSunPosition();
+            });
+        }
+
+        function getLocationAndInitSun() {
+            // Try to load saved location from Forecast tab
+            try {
+                const savedLat = localStorage.getItem('plant_monitor_lat');
+                const savedLon = localStorage.getItem('plant_monitor_lon');
+                const savedName = localStorage.getItem('plant_monitor_location_name');
+                if (savedLat && savedLon) {
+                    userLat = parseFloat(savedLat);
+                    userLng = parseFloat(savedLon);
+                    document.getElementById('loc-display').innerText = savedName || `${userLat.toFixed(2)}, ${userLng.toFixed(2)}`;
+                    document.getElementById('loading-gps').style.display = 'none';
+                    updateSunPosition();
+                    drawSunPath();
+                    return;
+                }
+            } catch (e) { /* localStorage not available */ }
+
+            // Fallback to GPS
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        userLat = position.coords.latitude;
+                        userLng = position.coords.longitude;
+                        document.getElementById('loc-display').innerText = `${userLat.toFixed(2)}, ${userLng.toFixed(2)}`;
+                        document.getElementById('loading-gps').style.display = 'none';
+                        updateSunPosition();
+                        drawSunPath();
+                    },
+                    () => {
+                        document.getElementById('loc-display').innerText = `Da Nang (Default)`;
+                        document.getElementById('loading-gps').style.display = 'none';
+                        updateSunPosition();
+                        drawSunPath();
+                    }
+                );
+            }
+        }
+
+        function updateSunPosition() {
+            if (!window.SunCalc) return;
+
+            const sunPos = SunCalc.getPosition(simulationDate, userLat, userLng);
+
+            const getDir = (radius) => ({
+                x: radius * Math.cos(sunPos.altitude) * -Math.sin(sunPos.azimuth),
+                y: radius * Math.sin(sunPos.altitude),
+                z: radius * Math.cos(sunPos.altitude) * Math.cos(sunPos.azimuth)
+            });
+
+            const skyDir = getDir(SKY_RADIUS);
+            sunSphere.position.set(skyDir.x, skyDir.y, skyDir.z);
+
+            const lightDir = getDir(LIGHT_RADIUS);
+            sunLight.position.set(lightDir.x, lightDir.y, lightDir.z);
+
+            if (skyDir.y < 0) {
+                sunLight.intensity = 0;
+                sunSphere.material.color.setHex(0x333333);
+            } else {
+                sunLight.intensity = 1.5;
+                const colorLerp = Math.max(0, Math.min(1, sunPos.altitude / (Math.PI / 4)));
+                const color = new THREE.Color().lerpColors(new THREE.Color(0xff8c00), new THREE.Color(0xffffff), colorLerp);
+                sunLight.color.copy(color);
+                sunSphere.material.color.copy(color);
+            }
+        }
+
+        function drawSunPath() {
+            if (!window.SunCalc) return;
+
+            const toRemove = skyGroup.children.filter(c => c !== sunSphere);
+            toRemove.forEach(child => {
+                if (child.geometry) child.geometry.dispose();
+                if (child.material) child.material.dispose();
+                skyGroup.remove(child);
+            });
+
+            const points = [];
+            const tempDate = new Date(simulationDate);
+
+            for (let h = 5; h <= 19; h += 0.25) {
+                tempDate.setHours(Math.floor(h));
+                tempDate.setMinutes((h % 1) * 60);
+                const pos = SunCalc.getPosition(tempDate, userLat, userLng);
+                const x = SKY_RADIUS * Math.cos(pos.altitude) * -Math.sin(pos.azimuth);
+                const y = SKY_RADIUS * Math.sin(pos.altitude);
+                const z = SKY_RADIUS * Math.cos(pos.altitude) * Math.cos(pos.azimuth);
+                points.push(new THREE.Vector3(x, y, z));
+            }
+
+            const curve = new THREE.CatmullRomCurve3(points);
+            const tubeGeo = new THREE.TubeGeometry(curve, 64, 0.1, 8, false);
+            const tubeMat = new THREE.MeshBasicMaterial({ color: 0xf4a261, transparent: true, opacity: 0.6 });
+            const tubePath = new THREE.Mesh(tubeGeo, tubeMat);
+            skyGroup.add(tubePath);
+
+            const markerGeo = new THREE.SphereGeometry(0.5, 16, 16);
+            const markerMat = new THREE.MeshBasicMaterial({ color: 0xe63946 });
+
+            for (let h = 5; h <= 19; h++) {
+                tempDate.setHours(h);
+                tempDate.setMinutes(0);
+                const pos = SunCalc.getPosition(tempDate, userLat, userLng);
+                const x = SKY_RADIUS * Math.cos(pos.altitude) * -Math.sin(pos.azimuth);
+                const y = SKY_RADIUS * Math.sin(pos.altitude);
+                const z = SKY_RADIUS * Math.cos(pos.altitude) * Math.cos(pos.azimuth);
+
+                const marker = new THREE.Mesh(markerGeo, markerMat);
+                marker.position.set(x, y, z);
+                skyGroup.add(marker);
+
+                const sprite = createTextSprite(`${h}:00`);
+                sprite.position.set(x, y + 2.5, z);
+                skyGroup.add(sprite);
+            }
+        }
+
+        function onWindowResize() {
+            const navH = document.querySelector('.navbar').offsetHeight || 64;
+            camera.aspect = window.innerWidth / (window.innerHeight - navH);
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight - navH);
+        }
+
+        function animate() {
+            renderer.setAnimationLoop(render);
+        }
+
+        function render(timestamp, frame) {
+            if (controls) controls.update();
+
+            if (renderer.xr.isPresenting) {
+                skyGroup.position.copy(camera.position);
+                if (arAnchorGroup.visible) {
+                    lightGroup.position.copy(arAnchorGroup.position);
+                }
+            } else {
+                skyGroup.position.copy(controls.target);
+                lightGroup.position.copy(arAnchorGroup.position);
+            }
+
+            if (frame) {
+                const referenceSpace = renderer.xr.getReferenceSpace();
+                const session = renderer.xr.getSession();
+
+                if (hitTestSourceRequested === false) {
+                    session.requestReferenceSpace('viewer').then(function (refSpace) {
+                        session.requestHitTestSource({ space: refSpace }).then(function (source) {
+                            hitTestSource = source;
+                        });
+                    });
+                    session.addEventListener('end', function () {
+                        hitTestSourceRequested = false;
+                        hitTestSource = null;
+                    });
+                    hitTestSourceRequested = true;
+                }
+
+                if (hitTestSource) {
+                    const hitTestResults = frame.getHitTestResults(hitTestSource);
+                    if (hitTestResults.length > 0) {
+                        const hit = hitTestResults[0];
+                        reticle.visible = true;
+                        reticle.matrix.fromArray(hit.getPose(referenceSpace).transform.matrix);
+                    } else {
+                        reticle.visible = false;
+                    }
+                }
+            }
+
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Forecast - Plant Monitor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>7-Day Forecast & Watering Plan</h1>
+</div>
+
+<div class="forecast-controls">
+    <div class="forecast-location card" id="location-bar">
+        <div class="location-form">
+            <span class="material-icons-outlined">location_on</span>
+            <div class="location-search-wrapper">
+                <input type="text" id="location-input" placeholder="Search city or place..." class="input-field" autocomplete="off">
+                <div id="location-dropdown" class="location-dropdown hidden"></div>
+            </div>
+            <button class="btn btn-primary btn-sm" id="btn-fetch-forecast">
+                <span class="material-icons-outlined">search</span>
+                Search
+            </button>
+            <span id="current-location" class="current-location">Da Nang, Vietnam</span>
+        </div>
+        <input type="hidden" id="lat-input" value="16.0544">
+        <input type="hidden" id="lon-input" value="108.2022">
+    </div>
+
+    <div class="forecast-plant-selector card" id="plant-selector">
+        <div class="selector-header">
+            <span class="material-icons-outlined">yard</span>
+            <span class="selector-label">Select a plant:</span>
+        </div>
+        <div id="plant-tabs" class="plant-tabs">
+            <div class="loading">Loading plants...</div>
+        </div>
+    </div>
+</div>
+
+<div id="plant-care-info" class="hidden"></div>
+
+<div class="forecast-weather-strip" id="weather-strip">
+    <div class="loading">Loading weather data...</div>
+</div>
+
+<div id="watering-plans">
+    <div class="loading">Loading watering plans...</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/forecast.js') }}"></script>
+{% endblock %}
