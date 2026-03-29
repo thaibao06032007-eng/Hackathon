@@ -7,7 +7,7 @@ load_dotenv(override=True)
 DATABASE_PATH = 'plant_monitor.db'
 DEFAULT_SENSOR_INTERVAL = 30
 DEFAULT_WATER_DURATION = 5
-GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
 
 def is_valid_local_ip(ip):
     """Validate that an IP is a private/local network address."""

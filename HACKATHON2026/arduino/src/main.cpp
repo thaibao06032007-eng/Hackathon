@@ -22,11 +22,11 @@
 // ==========================================
 // 1. WIFI SETTINGS (CHANGE THESE!)
 // ==========================================
-const char* ssid = "Galaxy Z Fold6 200A";
-const char* password = "c8j2p3dx36isnmk";
+const char* ssid = "iPhone";
+const char* password = "12345678910";
 
 // Flask backend server address (your PC's local IP)
-const char* SERVER_URL = "http://10.175.88.221:5000/api/sensor-data";
+const char* SERVER_URL = "http://172.20.10.5:5000/api/sensor-data";
 
 // Plant ID — must match the plant ID in the web app settings
 const int PLANT_ID = 1;
