@@ -9,6 +9,9 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__)
 
+# Store for discovered ESP32 devices: {ip: {plant_id, last_seen}}
+esp32_devices = {}
+
 # Initialize database on startup
 db.init_db()
 
@@ -32,8 +35,7 @@ def poll_esp32_sensors():
                         db.add_sensor_data(
                             plant['id'],
                             data.get('soil_humidity'),
-                            data.get('temperature'),
-                            data.get('light_level', 0)
+                            data.get('temperature')
                         )
                 except Exception:
                     pass  # ESP32 unreachable, skip this cycle
@@ -129,6 +131,15 @@ def api_receive_sensor_data():
     if not data or not data.get('plant_id'):
         return jsonify({'error': 'plant_id is required'}), 400
 
+    # Auto-register the ESP32's IP on every data post
+    sender_ip = request.remote_addr
+    if sender_ip and is_valid_local_ip(sender_ip):
+        esp32_devices[sender_ip] = {
+            'ip': sender_ip,
+            'plant_id': int(data['plant_id']),
+            'last_seen': datetime.now().isoformat()
+        }
+
     plant_id = int(data['plant_id'])
     plant = db.get_plant(plant_id)
     if not plant:
@@ -137,8 +148,7 @@ def api_receive_sensor_data():
     db.add_sensor_data(
         plant_id,
         data.get('soil_humidity'),
-        data.get('temperature'),
-        data.get('light_level')
+        data.get('temperature')
     )
     return jsonify({'message': 'Data recorded'}), 201
 
@@ -178,7 +188,7 @@ def api_water_plant(plant_id):
 
     data = request.get_json(silent=True) or {}
     duration = data.get('duration', plant['water_duration'])
-    duration = max(1, min(60, int(duration)))  # Safety: 1-60 seconds
+    duration = max(1, min(3600, int(duration)))  # Safety: 1-3600 seconds
 
     try:
         resp = http_requests.get(
@@ -768,6 +778,39 @@ def api_get_forecast():
         'weather_daily': daily,
         'watering_plans': watering_plans
     })
+
+
+# ==================== API: ESP32 Discovery ====================
+
+@app.route('/api/esp32/register', methods=['POST'])
+def api_esp32_register():
+    """ESP32 calls this on boot to announce its IP."""
+    data = request.get_json()
+    ip = data.get('ip', '').strip() if data else ''
+    if not ip:
+        ip = request.remote_addr
+    if not ip or not is_valid_local_ip(ip):
+        return jsonify({'error': 'Invalid IP'}), 400
+    plant_id = data.get('plant_id') if data else None
+    esp32_devices[ip] = {
+        'ip': ip,
+        'plant_id': plant_id,
+        'last_seen': datetime.now().isoformat()
+    }
+    return jsonify({'message': 'Registered', 'ip': ip}), 200
+
+
+@app.route('/api/esp32/discover', methods=['GET'])
+def api_esp32_discover():
+    """Return list of ESP32 devices that have registered."""
+    # Also include IPs from the request source if an ESP32 posts sensor data
+    devices = list(esp32_devices.values())
+    # Mark which IPs are already assigned to a plant
+    plants = db.get_all_plants()
+    assigned_ips = {p['esp32_ip'] for p in plants if p.get('esp32_ip')}
+    for d in devices:
+        d['assigned'] = d['ip'] in assigned_ips
+    return jsonify({'devices': devices})
 
 
 # ==================== Run ====================

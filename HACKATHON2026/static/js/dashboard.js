@@ -37,7 +37,6 @@ function createPlantCard(plant) {
 
     const humidity = data.soil_humidity != null ? `${data.soil_humidity.toFixed(1)}%` : '--';
     const temp = data.temperature != null ? `${data.temperature.toFixed(1)}\u00b0C` : '--';
-    const light = data.light_level != null ? `${data.light_level.toFixed(0)} lux` : '--';
 
     return `
         <a href="/plant/${plant.id}" class="plant-card ${statusClass}">
@@ -61,11 +60,6 @@ function createPlantCard(plant) {
                     <span class="material-icons-outlined">thermostat</span>
                     <span class="reading-value">${temp}</span>
                     <span class="reading-label">Temperature</span>
-                </div>
-                <div class="reading">
-                    <span class="material-icons-outlined">light_mode</span>
-                    <span class="reading-value">${light}</span>
-                    <span class="reading-label">Light</span>
                 </div>
             </div>
         </a>

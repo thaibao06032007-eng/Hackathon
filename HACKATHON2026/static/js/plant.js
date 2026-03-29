@@ -2,6 +2,11 @@ let miniChart = null;
 let threeScene = null;
 let plantGroup = null;
 let currentHealthScore = 100;
+let displayedScore = 0;
+let scoreAnimFrame = null;
+let currentPlantScale = 1.0;
+let targetPlantScale = 1.0;
+let targetHealthForGrowth = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     loadPlantData();
@@ -12,6 +17,15 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePlant3D(e.target.checked);
     });
     document.getElementById('auto-water-toggle').addEventListener('change', toggleAutoWater);
+    document.getElementById('water-duration').addEventListener('change', (e) => {
+        const customInput = document.getElementById('custom-water-duration');
+        if (e.target.value === 'custom') {
+            customInput.classList.remove('hidden');
+            customInput.focus();
+        } else {
+            customInput.classList.add('hidden');
+        }
+    });
 
     // Auto-refresh every 15 seconds
     setInterval(loadPlantData, 15000);
@@ -66,23 +80,19 @@ function updateUI(plant) {
         const pct = Math.min(100, Math.max(0, ((data.temperature + 10) / 60) * 100));
         document.querySelector('#temp-bar .sensor-bar-fill').style.width = `${pct}%`;
     }
-    if (data.light_level != null) {
-        document.getElementById('light-value').textContent = `${data.light_level.toFixed(0)} lux`;
-        const pct = Math.min(100, Math.max(0, (data.light_level / 1000) * 100));
-        document.querySelector('#light-bar .sensor-bar-fill').style.width = `${pct}%`;
-    }
 
-    // Health score
+    // Health score — smooth animated counter + tree
     const scoreEl = document.getElementById('health-score');
     const labelEl = document.getElementById('health-label');
     const detailsEl = document.getElementById('health-details');
 
     if (health.score != null) {
-        scoreEl.textContent = health.score;
-        scoreEl.style.color = health.color;
+        const targetScore = health.score;
+        animateScore(scoreEl, displayedScore, targetScore, health.color);
         labelEl.textContent = health.label;
         labelEl.style.color = health.color;
-        currentHealthScore = health.score;
+        currentHealthScore = targetScore;
+        updateHealthTree(targetScore);
     }
 
     if (health.details && health.details.length > 0) {
@@ -101,19 +111,85 @@ function updateUI(plant) {
     }
 }
 
+function animateScore(el, from, to, color) {
+    if (scoreAnimFrame) cancelAnimationFrame(scoreAnimFrame);
+    const duration = 800;
+    const start = performance.now();
+    el.style.color = color;
+    function step(now) {
+        const t = Math.min((now - start) / duration, 1);
+        const ease = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // easeInOutQuad
+        const current = Math.round(from + (to - from) * ease);
+        el.textContent = current;
+        displayedScore = current;
+        if (t < 1) {
+            scoreAnimFrame = requestAnimationFrame(step);
+        } else {
+            displayedScore = to;
+        }
+    }
+    scoreAnimFrame = requestAnimationFrame(step);
+}
+
+function updateHealthTree(score) {
+    const pct = score / 100;
+
+    function lerpColor(deadR, deadG, deadB, liveR, liveG, liveB, t) {
+        const r = Math.round(deadR + (liveR - deadR) * t);
+        const g = Math.round(deadG + (liveG - deadG) * t);
+        const b = Math.round(deadB + (liveB - deadB) * t);
+        return `rgb(${r},${g},${b})`;
+    }
+
+    const c3 = document.getElementById('tree-canopy-3');
+    const c2 = document.getElementById('tree-canopy-2');
+    const c1 = document.getElementById('tree-canopy-1');
+    const trunk = document.getElementById('tree-trunk');
+    const leaves = document.getElementById('falling-leaves');
+    const svg = document.getElementById('health-tree');
+
+    // Canopy color: dead brown → lush green (wider contrast)
+    if (c3) c3.setAttribute('fill', lerpColor(120, 80, 10, 30, 120, 70, pct));
+    if (c2) c2.setAttribute('fill', lerpColor(140, 95, 20, 50, 160, 100, pct));
+    if (c1) c1.setAttribute('fill', lerpColor(160, 110, 30, 70, 200, 130, pct));
+
+    // Trunk darkens when healthy
+    if (trunk) trunk.setAttribute('fill', lerpColor(160, 130, 60, 110, 85, 16, pct));
+
+    // Canopy shrinks dramatically when unhealthy
+    if (c3) { c3.setAttribute('rx', 30 + 45 * pct); c3.setAttribute('ry', 15 + 25 * pct); }
+    if (c2) { c2.setAttribute('rx', 22 + 38 * pct); c2.setAttribute('ry', 12 + 21 * pct); }
+    if (c1) { c1.setAttribute('rx', 15 + 27 * pct); c1.setAttribute('ry', 10 + 17 * pct); }
+
+    // Canopy opacity fades when dying
+    if (c3) c3.setAttribute('opacity', 0.4 + 0.5 * pct);
+    if (c2) c2.setAttribute('opacity', 0.4 + 0.5 * pct);
+    if (c1) c1.setAttribute('opacity', 0.5 + 0.45 * pct);
+
+    // Show falling leaves when score < 60
+    if (leaves) leaves.style.display = score < 60 ? 'block' : 'none';
+
+    // Desaturate + darken when critical
+    if (svg) {
+        if (score < 40) {
+            svg.style.filter = `saturate(${0.2 + pct * 0.8}) brightness(${0.7 + pct * 0.3})`;
+        } else {
+            svg.style.filter = '';
+        }
+    }
+}
+
 function updateMiniChart(sensorData) {
     const ctx = document.getElementById('mini-chart').getContext('2d');
 
     const labels = sensorData.map(d => formatTime(d.recorded_at));
     const humidity = sensorData.map(d => d.soil_humidity);
     const temperature = sensorData.map(d => d.temperature);
-    const light = sensorData.map(d => d.light_level);
 
     if (miniChart) {
         miniChart.data.labels = labels;
         miniChart.data.datasets[0].data = humidity;
         miniChart.data.datasets[1].data = temperature;
-        miniChart.data.datasets[2].data = light;
         miniChart.update();
         return;
     }
@@ -140,16 +216,6 @@ function updateMiniChart(sensorData) {
                     tension: 0.3,
                     fill: true,
                     pointRadius: 0
-                },
-                {
-                    label: 'Light (lux)',
-                    data: light,
-                    borderColor: '#f4a261',
-                    backgroundColor: 'rgba(244, 162, 97, 0.1)',
-                    tension: 0.3,
-                    fill: true,
-                    yAxisID: 'y2',
-                    pointRadius: 0
                 }
             ]
         },
@@ -162,8 +228,7 @@ function updateMiniChart(sensorData) {
             },
             scales: {
                 x: { display: false },
-                y: { position: 'left', title: { display: true, text: '% / \u00b0C', font: { size: 11 } } },
-                y2: { position: 'right', title: { display: true, text: 'lux', font: { size: 11 } }, grid: { drawOnChartArea: false } }
+                y: { position: 'left', title: { display: true, text: '% / \u00b0C', font: { size: 11 } } }
             }
         }
     });
@@ -181,7 +246,19 @@ function updateLastWatered(waterEvents) {
 async function waterPlant() {
     const btn = document.getElementById('water-btn');
     const status = document.getElementById('water-status');
-    const duration = parseInt(document.getElementById('water-duration').value);
+    const select = document.getElementById('water-duration');
+    let duration;
+    if (select.value === 'custom') {
+        duration = parseInt(document.getElementById('custom-water-duration').value);
+        if (!duration || duration < 1 || duration > 3600) {
+            status.textContent = 'Enter a custom duration between 1 and 3600 seconds';
+            status.style.background = 'var(--danger-light)';
+            status.style.color = 'var(--danger)';
+            return;
+        }
+    } else {
+        duration = parseInt(select.value);
+    }
 
     btn.disabled = true;
     btn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Watering...';
@@ -300,6 +377,17 @@ function initThreeJS() {
         requestAnimationFrame(animate);
         if (plantGroup) {
             plantGroup.rotation.y += 0.005;
+
+            // Smooth growth animation
+            if (Math.abs(currentPlantScale - targetPlantScale) > 0.005) {
+                currentPlantScale += (targetPlantScale - currentPlantScale) * 0.03;
+                buildPlant(currentPlantScale);
+                if (targetHealthForGrowth != null) {
+                    const t = (currentPlantScale - 1.0) / (targetPlantScale - 1.0 || 1);
+                    const blendedScore = currentHealthScore + (targetHealthForGrowth - currentHealthScore) * Math.max(0, Math.min(1, t));
+                    updatePlant3DHealth(blendedScore);
+                }
+            }
         }
         renderer.render(scene, camera);
     }
@@ -394,10 +482,10 @@ function updatePlant3DHealth(score) {
 
 function updatePlant3D(showFuture) {
     if (showFuture) {
-        buildPlant(1.5);
-        updatePlant3DHealth(Math.min(100, currentHealthScore + 20));
+        targetPlantScale = 1.5;
+        targetHealthForGrowth = Math.min(100, currentHealthScore + 20);
     } else {
-        buildPlant(1.0);
-        updatePlant3DHealth(currentHealthScore);
+        targetPlantScale = 1.0;
+        targetHealthForGrowth = currentHealthScore;
     }
 }

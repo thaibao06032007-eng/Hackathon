@@ -108,6 +108,10 @@ void setup() {
   server.on("/status", handleStatus);
   server.begin();
   Serial.println("HTTP server started on port 80");
+
+  // Register this ESP32 with the Flask backend
+  registerWithServer();
+
   Serial.println("--- ESP32 SMART WATERING SYSTEM STARTING ---");
 }
 
@@ -163,6 +167,37 @@ void loop() {
 
     Serial.println("------------------------------------");
   }
+}
+
+// ==================== REGISTER WITH FLASK BACKEND ====================
+void registerWithServer() {
+    if (WiFi.status() != WL_CONNECTED) return;
+
+    HTTPClient http;
+    // Derive base URL from SERVER_URL (strip the path)
+    String baseUrl = String(SERVER_URL);
+    int apiIndex = baseUrl.indexOf("/api/");
+    if (apiIndex > 0) baseUrl = baseUrl.substring(0, apiIndex);
+    String registerUrl = baseUrl + "/api/esp32/register";
+
+    http.begin(registerUrl);
+    http.addHeader("Content-Type", "application/json");
+    http.setTimeout(5000);
+
+    StaticJsonDocument<128> doc;
+    doc["ip"] = WiFi.localIP().toString();
+    doc["plant_id"] = PLANT_ID;
+
+    String json;
+    serializeJson(doc, json);
+
+    int httpCode = http.POST(json);
+    if (httpCode > 0) {
+        Serial.printf("Registered with server -> HTTP %d\n", httpCode);
+    } else {
+        Serial.printf("Registration failed: %s\n", http.errorToString(httpCode).c_str());
+    }
+    http.end();
 }
 
 // ==================== SEND DATA TO BACKEND ====================
