@@ -101,6 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modal-close').addEventListener('click', closeModal);
     document.getElementById('cancel-btn').addEventListener('click', closeModal);
     document.getElementById('plant-form').addEventListener('submit', savePlant);
+    document.getElementById('discover-esp32-btn').addEventListener('click', discoverESP32);
 
     // Close modal on backdrop click
     document.getElementById('plant-modal').addEventListener('click', (e) => {
@@ -514,5 +515,48 @@ async function confirmDelete(id, name) {
         } catch (error) {
             alert('Error deleting plant: ' + error.message);
         }
+    }
+}
+
+async function discoverESP32() {
+    const btn = document.getElementById('discover-esp32-btn');
+    const resultsDiv = document.getElementById('esp32-discover-results');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Scanning...';
+    resultsDiv.classList.remove('hidden');
+    resultsDiv.innerHTML = '<div class="discover-empty">Searching for ESP32 devices...</div>';
+
+    try {
+        const resp = await fetch('/api/esp32/discover');
+        if (!resp.ok) throw new Error('Discovery failed');
+        const data = await resp.json();
+        const devices = data.devices || [];
+
+        if (devices.length === 0) {
+            resultsDiv.innerHTML = '<div class="discover-empty">No ESP32 devices found. Make sure your ESP32 is powered on and connected to the same network.</div>';
+            return;
+        }
+
+        resultsDiv.innerHTML = devices.map(d => {
+            const assignedLabel = d.assigned ? ' (already assigned)' : '';
+            const assignedClass = d.assigned ? ' assigned' : '';
+            return `<div class="discover-item${assignedClass}" data-ip="${escapeHtml(d.ip)}">
+                <span class="ip">${escapeHtml(d.ip)}</span>
+                <span class="status">Plant ID: ${d.plant_id != null ? d.plant_id : '?'} &middot; Last seen: ${escapeHtml(d.last_seen || 'unknown')}${assignedLabel}</span>
+            </div>`;
+        }).join('');
+
+        resultsDiv.querySelectorAll('.discover-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.getElementById('plant-esp32-ip').value = item.dataset.ip;
+                resultsDiv.classList.add('hidden');
+            });
+        });
+    } catch (error) {
+        resultsDiv.innerHTML = `<div class="discover-empty">Error: ${escapeHtml(error.message)}</div>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-icons-outlined">search</span> Discover';
     }
 }
