@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Plant Monitor{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <span class="material-icons-outlined">eco</span>
+            <span>Plant Monitor</span>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <span class="material-icons-outlined">dashboard</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="/history" class="nav-link {% if request.endpoint == 'history' %}active{% endif %}">
+                <span class="material-icons-outlined">timeline</span>
+                <span class="nav-label">History</span>
+            </a>
+            <a href="/ar" class="nav-link {% if request.endpoint == 'ar_view' %}active{% endif %}">
+                <span class="material-icons-outlined">view_in_ar</span>
+                <span class="nav-label">AR View</span>
+            </a>
+            <a href="/settings" class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}">
+                <span class="material-icons-outlined">settings</span>
+                <span class="nav-label">Settings</span>
+            </a>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

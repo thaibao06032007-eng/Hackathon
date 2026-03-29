@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}History - Plant Monitor{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>Sensor History</h1>
+</div>
+
+<div class="history-controls">
+    <select id="plant-select" class="select">
+        <option value="">Select a plant...</option>
+    </select>
+    <select id="time-range" class="select">
+        <option value="6">Last 6 Hours</option>
+        <option value="24" selected>Last 24 Hours</option>
+        <option value="72">Last 3 Days</option>
+        <option value="168">Last 7 Days</option>
+        <option value="720">Last 30 Days</option>
+    </select>
+</div>
+
+<div class="charts-container">
+    <div class="card">
+        <h2>Soil Humidity (%)</h2>
+        <div class="chart-wrapper">
+            <canvas id="humidity-chart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <h2>Temperature (&deg;C)</h2>
+        <div class="chart-wrapper">
+            <canvas id="temp-chart"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <h2>Light Level (lux)</h2>
+        <div class="chart-wrapper">
+            <canvas id="light-chart"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Watering Events</h2>
+    <table id="water-table" class="data-table">
+        <thead>
+            <tr>
+                <th>Date &amp; Time</th>
+                <th>Duration</th>
+                <th>Triggered By</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td colspan="3" class="empty-message">Select a plant to view history</td></tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}

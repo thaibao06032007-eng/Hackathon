@@ -1,0 +1,884 @@
+/* ==================== CSS Variables ==================== */
+:root {
+    --primary: #2d6a4f;
+    --primary-light: #40916c;
+    --primary-lighter: #52b788;
+    --primary-lightest: #95d5b2;
+    --primary-bg: #d8f3dc;
+
+    --danger: #e63946;
+    --danger-light: #fce4e6;
+    --warning: #f4a261;
+    --warning-light: #fef3e2;
+    --success: #2d6a4f;
+    --success-light: #d8f3dc;
+
+    --bg: #f5f7f5;
+    --card-bg: #ffffff;
+    --text: #1a1a2e;
+    --text-secondary: #6b7280;
+    --border: #e5e7eb;
+
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+
+    --nav-height: 64px;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ==================== Reset & Base ==================== */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* ==================== Navbar ==================== */
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--nav-height);
+    background: var(--card-bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    z-index: 100;
+    box-shadow: var(--shadow);
+}
+
+.nav-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-right: 48px;
+}
+
+.nav-brand .material-icons-outlined {
+    font-size: 28px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 4px;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.nav-link:hover {
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
+.nav-link.active {
+    background: var(--primary);
+    color: white;
+}
+
+.nav-link .material-icons-outlined {
+    font-size: 20px;
+}
+
+/* ==================== Main Content ==================== */
+.main-content {
+    margin-top: var(--nav-height);
+    padding: 24px;
+    max-width: 1400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ==================== Page Header ==================== */
+.page-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.page-header h1 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    flex: 1;
+}
+
+/* ==================== Buttons ==================== */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    font-family: var(--font);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-light);
+}
+
+.btn-secondary {
+    background: var(--border);
+    color: var(--text);
+}
+
+.btn-secondary:hover {
+    background: #d1d5db;
+}
+
+.btn-danger {
+    background: var(--danger);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c62828;
+}
+
+.btn-water {
+    background: #0288d1;
+    color: white;
+    padding: 12px 24px;
+    font-size: 1rem;
+    width: 100%;
+    justify-content: center;
+}
+
+.btn-water:hover {
+    background: #0277bd;
+}
+
+.btn-water:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-back {
+    background: none;
+    color: var(--text-secondary);
+    padding: 8px 12px;
+}
+
+.btn-back:hover {
+    background: var(--border);
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    padding: 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+}
+
+.btn-icon:hover {
+    background: var(--border);
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+/* ==================== Cards ==================== */
+.card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+
+.card h2 {
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.8rem;
+}
+
+/* ==================== Plants Grid (Dashboard) ==================== */
+.plants-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 16px;
+}
+
+.plant-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--border);
+    transition: all 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.plant-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.plant-card.healthy {
+    border-left-color: var(--success);
+}
+
+.plant-card.attention {
+    border-left-color: var(--warning);
+}
+
+.plant-card.critical {
+    border-left-color: var(--danger);
+}
+
+.plant-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.plant-card-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.plant-card-species {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Health Indicators */
+.health-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.health-indicator.healthy {
+    background: var(--success-light);
+    color: var(--success);
+}
+
+.health-indicator.attention {
+    background: var(--warning-light);
+    color: #e76f51;
+}
+
+.health-indicator.critical {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+
+.health-indicator.unknown {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.health-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+/* Plant Card Readings */
+.plant-card-readings {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.reading {
+    text-align: center;
+}
+
+.reading .material-icons-outlined {
+    font-size: 20px;
+    color: var(--primary-lighter);
+    display: block;
+    margin-bottom: 4px;
+}
+
+.reading-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: block;
+}
+
+.reading-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+/* ==================== Plant Detail Grid ==================== */
+.plant-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+/* Sensor Card */
+.sensor-readings {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.sensor-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.sensor-item .material-icons-outlined {
+    font-size: 24px;
+    color: var(--primary-lighter);
+}
+
+.sensor-info {
+    flex: 1;
+}
+
+.sensor-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.sensor-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.sensor-bar {
+    width: 80px;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.sensor-bar-fill {
+    height: 100%;
+    background: var(--primary-lighter);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    width: 0%;
+}
+
+/* Health Card */
+.health-score {
+    font-size: 3rem;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1;
+    margin-bottom: 8px;
+}
+
+.health-label {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+.health-details {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.health-details li {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    padding: 8px 12px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+}
+
+.health-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Controls Card */
+.water-status {
+    margin-top: 12px;
+    padding: 8px;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: 0.85rem;
+    min-height: 20px;
+}
+
+.last-watered {
+    margin-top: 16px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+/* Chart Card */
+.chart-card {
+    grid-column: span 2;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 250px;
+}
+
+.chart-wrapper canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* 3D Model Card */
+.plant-3d-container {
+    width: 100%;
+    height: 250px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.model-controls {
+    margin-top: 12px;
+}
+
+.toggle-label {
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.toggle-label input {
+    accent-color: var(--primary);
+}
+
+/* ==================== History Page ==================== */
+.history-controls {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+/* ==================== Forms ==================== */
+.select {
+    padding: 10px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-family: var(--font);
+    background: var(--card-bg);
+    color: var(--text);
+    min-width: 200px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 4px;
+    color: var(--text);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-family: var(--font);
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-bg);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 24px;
+}
+
+/* ==================== Modal ==================== */
+.modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 24px;
+    width: 90%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.modal-header h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-transform: none;
+    letter-spacing: normal;
+    margin-bottom: 0;
+    color: var(--text);
+}
+
+.modal-content h3 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin: 20px 0 12px;
+}
+
+/* ==================== Data Table ==================== */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+}
+
+.data-table th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+}
+
+.empty-message {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 24px !important;
+}
+
+/* ==================== Settings: Plants List ==================== */
+.plants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.plant-list-item {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.plant-list-item .material-icons-outlined.plant-icon {
+    font-size: 32px;
+    color: var(--primary-lighter);
+}
+
+.plant-list-info {
+    flex: 1;
+}
+
+.plant-list-info h3 {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.plant-list-info p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.plant-list-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ==================== AR Page ==================== */
+.ar-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ar-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.ar-viewport {
+    position: relative;
+    width: 100%;
+    max-width: 800px;
+    aspect-ratio: 4/3;
+    background: #1a1a2e;
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: 0 auto;
+}
+
+.ar-viewport video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ar-viewport canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.ar-info {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    min-width: 200px;
+    box-shadow: var(--shadow-lg);
+}
+
+.ar-info.hidden {
+    display: none;
+}
+
+.ar-info h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.ar-health {
+    margin-bottom: 8px;
+}
+
+.ar-data {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.ar-data > div {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+}
+
+.ar-instructions {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+}
+
+.ar-instructions .material-icons-outlined {
+    font-size: 20px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* ==================== Utilities ==================== */
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+    grid-column: 1 / -1;
+}
+
+.empty-state .material-icons-outlined {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1rem;
+    margin-bottom: 16px;
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 768px) {
+    .nav-links {
+        gap: 0;
+    }
+
+    .nav-label {
+        display: none;
+    }
+
+    .nav-brand span:not(.material-icons-outlined) {
+        display: none;
+    }
+
+    .nav-brand {
+        margin-right: 16px;
+    }
+
+    .main-content {
+        padding: 16px;
+    }
+
+    .plant-detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-card {
+        grid-column: span 1;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .plants-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .history-controls {
+        flex-direction: column;
+    }
+
+    .ar-controls {
+        flex-direction: column;
+    }
+
+    .plant-list-item {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .plant-list-actions {
+        width: 100%;
+        justify-content: center;
+    }
+}

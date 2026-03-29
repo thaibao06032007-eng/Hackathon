@@ -1,0 +1,38 @@
+{
+    "version": 4,
+    "configurations": [
+        {
+            "name": "PlatformIO ESP32",
+            "includePath": [
+                "${workspaceFolder}/arduino/src",
+                "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/cores/esp32",
+                "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/variants/esp32",
+                "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/WiFi/src",
+                "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/WebServer/src",
+                "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/HTTPClient/src",
+                "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/WiFiClientSecure/src",
+                "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/libraries/FS/src",
+                "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/include/**",
+                "${env:USERPROFILE}/.platformio/packages/framework-arduinoespressif32/tools/sdk/esp32/dio_qspi/include",
+                "${env:USERPROFILE}/.platformio/packages/toolchain-xtensa-esp32/xtensa-esp32-elf/include",
+                "${env:USERPROFILE}/.platformio/packages/toolchain-xtensa-esp32/lib/gcc/xtensa-esp32-elf/8.4.0/include",
+                "${workspaceFolder}/arduino/.pio/libdeps/esp32/ArduinoJson",
+                "${workspaceFolder}/arduino/.pio/libdeps/esp32/ArduinoJson/src",
+                "${workspaceFolder}/arduino/.pio/libdeps/esp32/DHT sensor library",
+                "${workspaceFolder}/arduino/.pio/libdeps/esp32/Adafruit Unified Sensor"
+            ],
+            "defines": [
+                "ESP32",
+                "ARDUINO=10812",
+                "PLATFORMIO=60113",
+                "ESP_PLATFORM",
+                "ARDUINO_ESP32_DEV",
+                "ARDUINO_ARCH_ESP32"
+            ],
+            "compilerPath": "${env:USERPROFILE}/.platformio/packages/toolchain-xtensa-esp32/bin/xtensa-esp32-elf-gcc.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x86"
+        }
+    ]
+}

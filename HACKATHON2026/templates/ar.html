@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}AR View - Plant Monitor{% endblock %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="ar-container">
+    <div class="ar-controls">
+        <select id="ar-plant-select" class="select">
+            <option value="">Select a plant...</option>
+        </select>
+        <button id="ar-start-btn" class="btn btn-primary">
+            <span class="material-icons-outlined">videocam</span>
+            Start Camera
+        </button>
+    </div>
+
+    <div class="ar-viewport">
+        <video id="ar-video" autoplay playsinline></video>
+        <canvas id="ar-overlay"></canvas>
+        <div id="ar-info" class="ar-info hidden">
+            <h3 id="ar-plant-name">Plant Name</h3>
+            <div id="ar-plant-health" class="ar-health"></div>
+            <div id="ar-plant-data" class="ar-data"></div>
+        </div>
+    </div>
+
+    <div class="ar-instructions">
+        <span class="material-icons-outlined">info</span>
+        <p>
+            Select a plant and start the camera to see an AR information overlay.
+            This is a prototype &mdash; future versions will use image recognition
+            for automatic plant detection.
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/ar.js') }}"></script>
+{% endblock %}

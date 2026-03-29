@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Plant Details - Plant Monitor{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <a href="/" class="btn btn-back">
+        <span class="material-icons-outlined">arrow_back</span>
+        Back
+    </a>
+    <h1 id="plant-name">Loading...</h1>
+    <div id="health-badge" class="health-badge"></div>
+</div>
+
+<div class="plant-detail-grid">
+    <!-- Current Sensor Readings -->
+    <div class="card sensor-card">
+        <h2>Current Readings</h2>
+        <div class="sensor-readings">
+            <div class="sensor-item">
+                <span class="material-icons-outlined">water_drop</span>
+                <div class="sensor-info">
+                    <span class="sensor-label">Soil Humidity</span>
+                    <span id="humidity-value" class="sensor-value">--</span>
+                </div>
+                <div id="humidity-bar" class="sensor-bar"><div class="sensor-bar-fill"></div></div>
+            </div>
+            <div class="sensor-item">
+                <span class="material-icons-outlined">thermostat</span>
+                <div class="sensor-info">
+                    <span class="sensor-label">Temperature</span>
+                    <span id="temp-value" class="sensor-value">--</span>
+                </div>
+                <div id="temp-bar" class="sensor-bar"><div class="sensor-bar-fill"></div></div>
+            </div>
+            <div class="sensor-item">
+                <span class="material-icons-outlined">light_mode</span>
+                <div class="sensor-info">
+                    <span class="sensor-label">Light Level</span>
+                    <span id="light-value" class="sensor-value">--</span>
+                </div>
+                <div id="light-bar" class="sensor-bar"><div class="sensor-bar-fill"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Prediction -->
+    <div class="card health-card">
+        <h2>Health Prediction</h2>
+        <div id="health-score" class="health-score">--</div>
+        <div id="health-label" class="health-label">No Data</div>
+        <ul id="health-details" class="health-details"></ul>
+    </div>
+
+    <!-- Controls -->
+    <div class="card controls-card">
+        <h2>Controls</h2>
+        <button id="water-btn" class="btn btn-water">
+            <span class="material-icons-outlined">water</span>
+            Water Plant
+        </button>
+        <div id="water-status" class="water-status"></div>
+        <div class="last-watered">
+            <span>Last watered:</span>
+            <span id="last-watered-time">Never</span>
+        </div>
+    </div>
+
+    <!-- 24h History Chart -->
+    <div class="card chart-card">
+        <h2>24h History</h2>
+        <div class="chart-wrapper">
+            <canvas id="mini-chart"></canvas>
+        </div>
+    </div>
+
+    <!-- 3D Plant View -->
+    <div class="card model-card">
+        <h2>3D Plant View</h2>
+        <div id="plant-3d" class="plant-3d-container"></div>
+        <div class="model-controls">
+            <label class="toggle-label">
+                <input type="checkbox" id="show-future">
+                Show Predicted Future Growth
+            </label>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>const PLANT_ID = {{ plant_id }};</script>
+<script src="{{ url_for('static', filename='js/plant.js') }}"></script>
+{% endblock %}
