@@ -17,7 +17,7 @@
 **Real-time monitoring of temperature, soil & air humidity.**  
 **Auto-waters plants when soil is dry. AI-powered plant identification.**
 
-[Features](#-features) · [Tech Stack](#-tech-stack) · [Installation](#-installation) · [Usage](#-usage) · [API](#-api-endpoints)
+[Features](#-features) · [Tech Stack](#-tech-stack) · [Installation](#-installation) · [Usage](#-usage) · [API](#-api-endpoints) · [Dev Log](#-development-log)
 
 </div>
 
@@ -208,6 +208,47 @@ HACKATHON2026/
     ├── settings.html
     └── ar.html
 ```
+
+## 📜 Development Log
+
+This project was built incrementally with a clear commit history. You can verify the development process yourself:
+
+**View full commit history on GitHub:**  
+👉 [**Commit History**](https://github.com/thaibao06032007-eng/Hackathon/commits/main)
+
+Or clone the repo and run:
+
+```bash
+git log --oneline --graph --all
+```
+
+<details>
+<summary><b>Commit timeline (click to expand)</b></summary>
+
+| # | Commit | Description |
+|---|--------|-------------|
+| 1 | `1fe1491` | Initial commit |
+| 2 | `d09f3b5` | First project upload — Flask server, database, ESP32 code, templates |
+| 3 | `a4c6752` | Add Forecast tab, AR View rewrite with WebXR, compass auto-detect |
+| 4 | `ce384ce` | Merge Arduino features: auto-water toggle, water duration, ESP32 Ticker safety |
+| 5 | `12adeea` | Redesign Forecast tab UI: hero header, search bar, UV/heat badges, watering cards |
+| 6 | `07e72fd` | Replace History tab with chat-style Notifications: messenger UI, plant chat API |
+| 7 | `27dc45a` | Update requirements.txt |
+| 8 | `62c9b8b` | Clean up requirements.txt |
+| 9 | `62726ad` | Remove light sensor, add animated health tree, custom water time, ESP32 auto-discover |
+| 10 | `8bae086` | Demo data for notifications, hero padding fix, AR navbar sync |
+| 11 | `4621eda` | UI improvements, Gemini API plant identification & logic |
+| 12 | `044882d` | Redesign dashboard UI: hero header, stats row, new plant cards |
+| 13 | `307c0c7` | Merge team updates, resolve cache conflict |
+| 14 | `5132f19` | Add air humidity sensor support (DHT11) across full stack |
+| 15 | `a885f72` | Restore ESP32 discover button, fix health tree centering |
+| 16 | `ea053b8` | Fix air humidity icon and sensor alignment |
+| 17 | `4b416d0` | Merge team updates and complete air humidity integration |
+| 18 | `ffae42e` | Add .gitignore, move API key to .env for security |
+
+</details>
+
+> 💡 **Tip:** Each commit represents a real development milestone. You can `git checkout <hash>` to view the project at any point in time, or use `git diff <hash1> <hash2>` to see exactly what changed between any two commits.
 
 ## 🤝 Contributing
 
