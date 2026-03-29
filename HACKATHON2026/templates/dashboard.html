@@ -2,17 +2,69 @@
 
 {% block title %}Dashboard - Plant Monitor{% endblock %}
 
-{% block content %}
-<div class="page-header">
-    <h1>Dashboard</h1>
-    <a href="/settings" class="btn btn-primary">
-        <span class="material-icons-outlined">add</span>
-        Add Plant
-    </a>
-</div>
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
 
-<div id="plants-grid" class="plants-grid">
-    <div class="loading">Loading plants...</div>
+{% block content %}
+<div class="dash-page">
+    <!-- Hero -->
+    <div class="dash-hero">
+        <h1 class="dash-title">
+            <span class="material-icons-outlined dash-title-icon">dashboard</span>
+            My Plants
+        </h1>
+    </div>
+
+    <!-- Stats Summary -->
+    <div class="dash-stats-row" id="dash-stats">
+        <div class="dash-stat-card">
+            <span class="material-icons-outlined dash-stat-icon" style="color:#43cea2">eco</span>
+            <div class="dash-stat-info">
+                <span class="dash-stat-value" id="stat-total">0</span>
+                <span class="dash-stat-label">Total Plants</span>
+            </div>
+        </div>
+        <div class="dash-stat-card">
+            <span class="material-icons-outlined dash-stat-icon" style="color:#2d6a4f">favorite</span>
+            <div class="dash-stat-info">
+                <span class="dash-stat-value" id="stat-healthy">0</span>
+                <span class="dash-stat-label">Healthy</span>
+            </div>
+        </div>
+        <div class="dash-stat-card">
+            <span class="material-icons-outlined dash-stat-icon" style="color:#f4a261">warning</span>
+            <div class="dash-stat-info">
+                <span class="dash-stat-value" id="stat-attention">0</span>
+                <span class="dash-stat-label">Need Attention</span>
+            </div>
+        </div>
+        <div class="dash-stat-card">
+            <span class="material-icons-outlined dash-stat-icon" style="color:#e63946">error</span>
+            <div class="dash-stat-info">
+                <span class="dash-stat-value" id="stat-critical">0</span>
+                <span class="dash-stat-label">Critical</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Plants Section -->
+    <div class="dash-section">
+        <div class="dash-section-header">
+            <h2 class="dash-section-title">
+                <span class="material-icons-outlined">yard</span>
+                Your Plants
+            </h2>
+            <a href="/settings" class="dash-add-btn">
+                <span class="material-icons-outlined">add</span>
+                Add Plant
+            </a>
+        </div>
+        <div id="plants-grid" class="dash-plants-grid">
+            <div class="loading">Loading plants...</div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 

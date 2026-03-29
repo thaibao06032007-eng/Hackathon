@@ -17,7 +17,7 @@
             <span>Plant Monitor</span>
         </div>
         <div class="nav-links">
-            <a href="/" class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}">
+            <a href="/" class="nav-link {% if request.endpoint in ['dashboard', 'plant_detail'] %}active{% endif %}">
                 <span class="material-icons-outlined">dashboard</span>
                 <span class="nav-label">Dashboard</span>
             </a>
