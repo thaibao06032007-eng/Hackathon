@@ -717,16 +717,21 @@ body {
 .sensor-item .material-icons-outlined {
     font-size: 24px;
     color: var(--primary-lighter);
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
 }
 
 .sensor-info {
     flex: 1;
+    min-width: 0;
 }
 
 .sensor-label {
     display: block;
     font-size: 0.8rem;
     color: var(--text-secondary);
+    white-space: nowrap;
 }
 
 .sensor-value {

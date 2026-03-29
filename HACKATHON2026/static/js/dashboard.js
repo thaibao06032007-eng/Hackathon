@@ -84,7 +84,7 @@ function createPlantCard(plant) {
                     <span class="dash-reading-lbl">Temp</span>
                 </div>
                 <div class="dash-reading">
-                    <span class="material-icons-outlined" style="color:#4fc3f7">humidity_mid</span>
+                    <span class="material-icons-outlined" style="color:#4fc3f7">air</span>
                     <span class="dash-reading-val">${airHumidity}</span>
                     <span class="dash-reading-lbl">Air</span>
                 </div>
