@@ -79,6 +79,7 @@ async function selectChatPlant(plantId) {
         renderChatMessages(data.messages);
         renderMiniCharts(data.sensor_history);
         renderWaterTable(data.water_events);
+        renderDemoIndicator(data.demo_mode);
     } catch (err) {
         document.getElementById('chat-messages').innerHTML =
             '<div class="notif-empty-chat">Could not load messages 😕</div>';
@@ -246,4 +247,22 @@ function renderWaterTable(events) {
             <td><span class="notif-trigger-badge">${escapeHtml(e.triggered_by)}</span></td>
         </tr>`;
     }).join('');
+}
+
+// ==================== Demo Mode Indicator ====================
+
+function renderDemoIndicator(isDemo) {
+    let badge = document.getElementById('demo-mode-badge');
+    if (!badge) {
+        badge = document.createElement('div');
+        badge.id = 'demo-mode-badge';
+        const panel = document.getElementById('data-panel');
+        if (panel) panel.prepend(badge);
+    }
+    if (isDemo) {
+        badge.innerHTML = '<span class="material-icons-outlined">science</span> Demo data — no Arduino connected';
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
 }

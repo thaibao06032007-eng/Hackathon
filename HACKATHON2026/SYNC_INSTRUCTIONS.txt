@@ -1,0 +1,63 @@
+============================================================
+  HOW TO SYNC YOUR LOCAL CODE WITH THE LATEST MAIN BRANCH
+============================================================
+
+Open a terminal (Command Prompt or PowerShell) and navigate
+to your project folder first:
+
+  cd path\to\your\HACKATHON2026
+
+Then follow these steps:
+
+------------------------------------------------------------
+STEP 1: Save your current work
+------------------------------------------------------------
+  git add .
+  git commit -m "My local changes"
+
+  (This saves everything you've been working on locally.)
+
+------------------------------------------------------------
+STEP 2: Pull the latest code from GitHub
+------------------------------------------------------------
+  git pull origin main
+
+  If this succeeds with no conflicts → skip to Step 4.
+  If Git says "CONFLICT" → go to Step 3.
+
+------------------------------------------------------------
+STEP 3: Fix conflicts (only if Step 2 shows conflicts)
+------------------------------------------------------------
+  Git will tell you which files have conflicts.
+  Open those files — you'll see sections like:
+
+    <<<<<<< HEAD
+    (your code)
+    =======
+    (code from main)
+    >>>>>>> origin/main
+
+  Keep the code you want, delete the markers, then:
+
+  git add .
+  git commit -m "Resolved merge conflicts"
+
+------------------------------------------------------------
+STEP 4: Push your changes to GitHub
+------------------------------------------------------------
+  git push origin main
+
+  Done! Your code and the main branch are now in sync.
+
+============================================================
+  ALTERNATIVE: If you want to DISCARD your local changes
+  and just get the latest main branch code:
+============================================================
+
+  git stash
+  git pull origin main
+
+  (Your old changes are saved in stash if you need them
+   later. Run "git stash pop" to bring them back.)
+
+============================================================

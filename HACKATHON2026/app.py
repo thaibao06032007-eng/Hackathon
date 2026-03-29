@@ -5,6 +5,7 @@ from config import is_valid_local_ip, PERENUAL_API_KEY
 import threading
 import time
 import random
+import math
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
@@ -419,6 +420,49 @@ def generate_chat_messages(plant, sensor_data, health, weather_today=None, water
     return messages
 
 
+def _generate_demo_sensor_history():
+    """Generate realistic demo sensor data for display when no Arduino is connected."""
+    now = datetime.now()
+    history = []
+    for i in range(24, -1, -1):
+        t = now - timedelta(minutes=i * 15)
+        hour = t.hour + t.minute / 60.0
+        # Soil humidity: fluctuates 40-65%, dips when "watered"
+        base_soil = 52 + 10 * math.sin(hour / 6 * math.pi)
+        soil = round(base_soil + random.uniform(-3, 3), 1)
+        # Temperature: cooler at night, warmer midday
+        base_temp = 23 + 5 * math.sin((hour - 6) / 12 * math.pi)
+        temp = round(base_temp + random.uniform(-1, 1), 1)
+        # Light: low at night, peaks midday
+        if 6 <= t.hour <= 19:
+            base_light = 300 + 400 * math.sin((hour - 6) / 13 * math.pi)
+        else:
+            base_light = random.uniform(5, 30)
+        light = round(base_light + random.uniform(-20, 20), 0)
+        history.append({
+            'recorded_at': t.strftime('%Y-%m-%d %H:%M:%S'),
+            'soil_humidity': max(0, min(100, soil)),
+            'temperature': max(5, min(45, temp)),
+            'light_level': max(0, light)
+        })
+    return history
+
+
+def _generate_demo_water_events():
+    """Generate demo watering events for display."""
+    now = datetime.now()
+    events = []
+    triggers = ['auto', 'manual', 'auto', 'schedule', 'auto']
+    for i in range(5):
+        t = now - timedelta(hours=random.randint(2 + i * 5, 4 + i * 6))
+        events.append({
+            'recorded_at': t.strftime('%Y-%m-%d %H:%M:%S'),
+            'duration_seconds': random.choice([3, 5, 5, 8, 10]),
+            'triggered_by': triggers[i]
+        })
+    return events
+
+
 @app.route('/api/plants/<int:plant_id>/chat', methods=['GET'])
 def api_plant_chat(plant_id):
     """Generate chat-style notification messages for a plant."""
@@ -431,11 +475,22 @@ def api_plant_chat(plant_id):
     water_events = db.get_water_history(plant_id, hours=24)
     sensor_history = db.get_sensor_history(plant_id, hours=6)
 
+    # Use demo data when no real data is available
+    use_demo = not sensor_history
+    if use_demo:
+        sensor_history = _generate_demo_sensor_history()
+    if not water_events:
+        water_events = _generate_demo_water_events()
+    if not sensor_data and sensor_history:
+        sensor_data = sensor_history[-1]
+    if not health:
+        health = {'score': random.randint(65, 92), 'status': 'healthy', 'label': 'Healthy'}
+
     # Try to get today's weather
     weather_today = None
     try:
         resp = http_requests.get(OPEN_METEO_URL, params={
-            'latitude': 16.0544, 'longitude': 108.2022,
+            'latitude': 39.1031, 'longitude': -84.5120,
             'daily': 'temperature_2m_max,precipitation_sum,uv_index_max',
             'timezone': 'auto', 'forecast_days': 1
         }, timeout=5)
@@ -463,7 +518,8 @@ def api_plant_chat(plant_id):
         'sensor_data': sensor_data,
         'health': health,
         'sensor_history': sensor_history,
-        'water_events': water_events[:5] if water_events else []
+        'water_events': water_events[:5] if water_events else [],
+        'demo_mode': use_demo
     })
 
 
@@ -574,8 +630,8 @@ def api_get_plant_care(plant_id):
 
 @app.route('/api/forecast', methods=['GET'])
 def api_get_forecast():
-    lat = request.args.get('lat', 16.0544, type=float)
-    lon = request.args.get('lon', 108.2022, type=float)
+    lat = request.args.get('lat', 39.1031, type=float)
+    lon = request.args.get('lon', -84.5120, type=float)
     plant_id = request.args.get('plant_id', None, type=int)
 
     # Fetch weather

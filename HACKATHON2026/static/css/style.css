@@ -1751,7 +1751,7 @@ body {
 .notif-hero {
     background: linear-gradient(135deg, #43cea2 0%, #185a9d 100%);
     border-radius: 18px;
-    padding: 28px 36px 24px;
+    padding: 32px 36px 28px;
     margin-bottom: 22px;
     color: #fff;
 }
@@ -2191,6 +2191,24 @@ body {
     font-weight: 700;
     background: #e8f5e9;
     color: #388e3c;
+}
+
+#demo-mode-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    margin-bottom: 14px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    color: #e65100;
+    font-size: 0.82rem;
+    font-weight: 600;
+    font-family: 'Quicksand', sans-serif;
+}
+
+#demo-mode-badge .material-icons-outlined {
+    font-size: 1rem;
 }
 
 /* ==================== Responsive ==================== */
