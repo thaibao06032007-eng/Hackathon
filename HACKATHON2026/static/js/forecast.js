@@ -55,7 +55,17 @@ function getWaterAmountLabel(shouldWater, amount) {
     }
 }
 
-// ==================== State ====================
+function toggleCareDesc(btn) {
+    const desc = btn.closest('.care-desc');
+    const short = desc.querySelector('.care-desc-short');
+    const full = desc.querySelector('.care-desc-full');
+    const expanded = full.style.display !== 'none';
+    short.style.display = expanded ? '' : 'none';
+    full.style.display = expanded ? 'none' : '';
+    btn.textContent = expanded ? 'Read more' : 'Show less';
+}
+
+// ==================== State ======================================
 let selectedPlantId = null;
 let allPlants = [];
 let careCache = {};
@@ -154,13 +164,35 @@ function renderCareInfo(care) {
                     ${care.drought_tolerant ? `<span class="care-tag"><span class="material-icons-outlined">water_drop</span>Drought tolerant</span>` : ''}
                     ${care.indoor ? `<span class="care-tag"><span class="material-icons-outlined">home</span>Indoor</span>` : ''}
                 </div>
-                ${care.description ? `<p class="care-desc">${escapeHtml(care.description).substring(0, 200)}${care.description.length > 200 ? '...' : ''}</p>` : ''}
+                ${care.description ? `
+                    <p class="care-desc">
+                        <span class="care-desc-short">${escapeHtml(care.description).substring(0, 200)}${care.description.length > 200 ? '... ' : ''}</span>
+                        ${care.description.length > 200 ? `<span class="care-desc-full" style="display:none">${escapeHtml(care.description)} </span>
+                        <span class="care-read-more" onclick="toggleCareDesc(this)" role="button">Read more</span>` : ''}
+                    </p>` : ''}
             </div>
         </div>
     </div>`;
 }
 
 // ==================== Render Weather & Plans ====================
+
+function getUvLevel(uv) {
+    if (uv == null) return { label: '--', cls: 'uv-unknown', icon: 'help_outline' };
+    if (uv <= 2) return { label: 'Low', cls: 'uv-low', icon: 'sentiment_satisfied' };
+    if (uv <= 5) return { label: 'Moderate', cls: 'uv-moderate', icon: 'wb_sunny' };
+    if (uv <= 7) return { label: 'High', cls: 'uv-high', icon: 'wb_twilight' };
+    if (uv <= 10) return { label: 'Very High', cls: 'uv-very-high', icon: 'local_fire_department' };
+    return { label: 'Extreme', cls: 'uv-extreme', icon: 'whatshot' };
+}
+
+function getHeatLevel(temp) {
+    if (temp == null) return { label: '', cls: '', icon: '' };
+    if (temp >= 40) return { label: 'Extreme Heat', cls: 'heat-extreme', icon: 'whatshot' };
+    if (temp >= 35) return { label: 'Very Hot', cls: 'heat-very-hot', icon: 'local_fire_department' };
+    if (temp >= 30) return { label: 'Hot', cls: 'heat-hot', icon: 'wb_sunny' };
+    return { label: '', cls: '', icon: '' };
+}
 
 function renderWeatherStrip(daily) {
     const strip = document.getElementById('weather-strip');
@@ -174,22 +206,41 @@ function renderWeatherStrip(daily) {
     let html = '';
     for (let i = 0; i < dates.length; i++) {
         const weather = getWeatherInfo(codes[i]);
+        const uvInfo = getUvLevel(uv[i]);
+        const heatInfo = getHeatLevel(tempMax[i]);
+        const isToday = i === 0;
+        const precipVal = precip[i] != null ? precip[i] : 0;
+
         html += `
-        <div class="weather-day-card">
+        <div class="weather-day-card ${isToday ? 'weather-today' : ''}">
             <div class="weather-day-name">${escapeHtml(getDayName(dates[i]))}</div>
-            <span class="material-icons-outlined weather-icon">${weather.icon}</span>
+            <div class="weather-icon-wrap">
+                <span class="material-icons-outlined weather-icon">${weather.icon}</span>
+            </div>
             <div class="weather-desc">${escapeHtml(weather.label)}</div>
             <div class="weather-temps">
                 <span class="temp-max">${tempMax[i] != null ? tempMax[i].toFixed(0) + '°' : '--'}</span>
+                <span class="temp-divider">/</span>
                 <span class="temp-min">${tempMin[i] != null ? tempMin[i].toFixed(0) + '°' : '--'}</span>
             </div>
-            <div class="weather-detail">
-                <span class="material-icons-outlined">water_drop</span>
-                ${precip[i] != null ? precip[i].toFixed(1) : '0'}mm
-            </div>
-            <div class="weather-detail">
-                <span class="material-icons-outlined">wb_sunny</span>
-                UV ${uv[i] != null ? uv[i].toFixed(0) : '--'}
+            ${heatInfo.label ? `
+            <div class="weather-badge ${heatInfo.cls}">
+                <span class="material-icons-outlined">${heatInfo.icon}</span>
+                ${heatInfo.label}
+            </div>` : ''}
+            <div class="weather-details-grid">
+                <div class="weather-detail-item">
+                    <span class="material-icons-outlined rain-icon">water_drop</span>
+                    <span class="detail-value">${precipVal.toFixed(1)}</span>
+                    <span class="detail-unit">mm</span>
+                </div>
+                <div class="weather-detail-item">
+                    <div class="uv-badge ${uvInfo.cls}">
+                        <span class="material-icons-outlined">${uvInfo.icon}</span>
+                        <span>UV ${uv[i] != null ? uv[i].toFixed(0) : '--'}</span>
+                    </div>
+                    <span class="uv-label">${uvInfo.label}</span>
+                </div>
             </div>
         </div>`;
     }
@@ -198,48 +249,69 @@ function renderWeatherStrip(daily) {
 
 function renderWateringPlan(plan) {
     const container = document.getElementById('watering-plans');
+    const section = document.getElementById('watering-section');
     if (!plan) {
         container.innerHTML = '';
+        section.style.display = 'none';
         return;
     }
+    section.style.display = 'block';
 
     const careInfo = plan.care_info || {};
     let html = `
-    <div class="card forecast-plant-card">
-        <div class="forecast-plant-header">
-            <div>
-                <h3 class="forecast-plant-name">${escapeHtml(plan.plant_name)}</h3>
-                ${plan.species ? `<span class="forecast-plant-species">${escapeHtml(plan.species)}</span>` : ''}
+    <div class="watering-plan-card">
+        <div class="watering-plan-header">
+            <div class="watering-plan-plant">
+                <span class="material-icons-outlined watering-plant-icon">eco</span>
+                <div>
+                    <h3 class="watering-plant-name">${escapeHtml(plan.plant_name)}</h3>
+                    ${plan.species ? `<span class="watering-plant-species">${escapeHtml(plan.species)}</span>` : ''}
+                </div>
             </div>
-            <div class="care-summary">
-                <span class="care-badge"><span class="material-icons-outlined">opacity</span>${escapeHtml(careInfo.watering_level || 'Average')}</span>
-                <span class="care-badge"><span class="material-icons-outlined">schedule</span>Every ${careInfo.watering_days || 3} days</span>
+            <div class="watering-care-badges">
+                <span class="watering-badge watering-badge-blue">
+                    <span class="material-icons-outlined">opacity</span>
+                    ${escapeHtml(careInfo.watering_level || 'Average')}
+                </span>
+                <span class="watering-badge watering-badge-green">
+                    <span class="material-icons-outlined">schedule</span>
+                    Every ${careInfo.watering_days || 3} Days
+                </span>
             </div>
         </div>
-        <div class="forecast-schedule">`;
+        <div class="watering-schedule-grid">`;
 
     for (const day of plan.daily) {
         const amountClass = getWaterAmountClass(day.water_amount);
         const amountLabel = getWaterAmountLabel(day.should_water, day.water_amount);
         const weatherInfo = getWeatherInfo(day.weather.weather_code);
+        const actionIcon = day.should_water ? 'water_drop' : 'do_not_disturb';
 
         html += `
-            <div class="forecast-day ${amountClass}">
-                <div class="forecast-day-date">${escapeHtml(getDayName(day.date))}</div>
-                <div class="forecast-day-weather">
-                    <span class="material-icons-outlined">${weatherInfo.icon}</span>
-                    <span>${day.weather.temp_max != null ? day.weather.temp_max.toFixed(0) : '--'}°/${day.weather.temp_min != null ? day.weather.temp_min.toFixed(0) : '--'}°</span>
+            <div class="watering-day-card ${amountClass}">
+                <div class="watering-day-header">
+                    <span class="watering-day-name">${escapeHtml(getDayName(day.date))}</span>
+                    <span class="watering-day-weather-icon material-icons-outlined">${weatherInfo.icon}</span>
                 </div>
-                <div class="forecast-day-action">
-                    <span class="material-icons-outlined">${day.should_water ? 'opacity' : 'block'}</span>
-                    <span class="water-label">${amountLabel}</span>
+                <div class="watering-day-temps">
+                    ${day.weather.temp_max != null ? day.weather.temp_max.toFixed(0) : '--'}° / ${day.weather.temp_min != null ? day.weather.temp_min.toFixed(0) : '--'}°
+                </div>
+                <div class="watering-day-action-wrap">
+                    <span class="material-icons-outlined watering-action-icon">${actionIcon}</span>
+                    <span class="watering-action-label">${amountLabel}</span>
                 </div>
                 ${day.should_water && day.suggested_duration > 0 ?
-                    `<div class="forecast-day-duration">${day.suggested_duration}s</div>` :
-                    `<div class="forecast-day-duration">--</div>`
+                    `<div class="watering-day-duration">
+                        <span class="material-icons-outlined">timer</span>
+                        ${day.suggested_duration}s
+                    </div>` :
+                    `<div class="watering-day-duration watering-day-skip">
+                        <span class="material-icons-outlined">remove</span>
+                        --
+                    </div>`
                 }
-                <div class="forecast-day-reasons">
-                    ${day.reasons.map(r => `<span class="reason-tag">${escapeHtml(r)}</span>`).join('')}
+                <div class="watering-day-reasons">
+                    ${day.reasons.map(r => `<span class="watering-reason">${escapeHtml(r)}</span>`).join('')}
                 </div>
             </div>`;
     }

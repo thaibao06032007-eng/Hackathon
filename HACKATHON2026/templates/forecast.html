@@ -2,48 +2,84 @@
 
 {% block title %}Forecast - Plant Monitor{% endblock %}
 
-{% block content %}
-<div class="page-header">
-    <h1>7-Day Forecast & Watering Plan</h1>
-</div>
+{% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+{% endblock %}
 
-<div class="forecast-controls">
-    <div class="forecast-location card" id="location-bar">
-        <div class="location-form">
-            <span class="material-icons-outlined">location_on</span>
-            <div class="location-search-wrapper">
-                <input type="text" id="location-input" placeholder="Search city or place..." class="input-field" autocomplete="off">
-                <div id="location-dropdown" class="location-dropdown hidden"></div>
+{% block content %}
+<div class="forecast-page">
+    <!-- Hero Header -->
+    <div class="forecast-hero">
+        <div class="forecast-hero-text">
+            <h1 class="forecast-title">
+                <span class="material-icons-outlined forecast-title-icon">filter_drama</span>
+                Forecast & Watering Plan
+            </h1>
+        </div>
+    </div>
+
+    <!-- Search Bar — Big & Prominent -->
+    <div class="forecast-search-card" id="location-bar">
+        <div class="forecast-search-inner">
+            <div class="forecast-search-icon-wrap">
+                <span class="material-icons-outlined">travel_explore</span>
             </div>
-            <button class="btn btn-primary btn-sm" id="btn-fetch-forecast">
-                <span class="material-icons-outlined">search</span>
-                Search
-            </button>
-            <span id="current-location" class="current-location">Da Nang, Vietnam</span>
+            <div class="forecast-search-field">
+                <label class="forecast-search-label">Location</label>
+                <div class="forecast-input-row">
+                    <div class="location-search-wrapper">
+                        <input type="text" id="location-input" placeholder="Search any city or place..." class="forecast-input" autocomplete="off">
+                        <div id="location-dropdown" class="location-dropdown hidden"></div>
+                    </div>
+                    <button class="forecast-search-btn" id="btn-fetch-forecast">
+                        <span class="material-icons-outlined">search</span>
+                        Search
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="forecast-search-current">
+            <span class="material-icons-outlined">my_location</span>
+            <span id="current-location">Da Nang, Vietnam</span>
         </div>
         <input type="hidden" id="lat-input" value="16.0544">
         <input type="hidden" id="lon-input" value="108.2022">
     </div>
 
-    <div class="forecast-plant-selector card" id="plant-selector">
+    <!-- Plant Selector -->
+    <div class="forecast-plant-selector-card" id="plant-selector">
         <div class="selector-header">
-            <span class="material-icons-outlined">yard</span>
-            <span class="selector-label">Select a plant:</span>
+            <span class="material-icons-outlined">local_florist</span>
+            <span class="selector-title">Select Your Plant</span>
         </div>
         <div id="plant-tabs" class="plant-tabs">
             <div class="loading">Loading plants...</div>
         </div>
     </div>
-</div>
 
-<div id="plant-care-info" class="hidden"></div>
+    <!-- Plant Care Info -->
+    <div id="plant-care-info" class="hidden"></div>
 
-<div class="forecast-weather-strip" id="weather-strip">
-    <div class="loading">Loading weather data...</div>
-</div>
+    <!-- Weather Strip -->
+    <div class="forecast-section">
+        <h2 class="forecast-section-title">
+            <span class="material-icons-outlined">calendar_month</span>
+            7-Day Weather Outlook
+        </h2>
+        <div class="forecast-weather-strip" id="weather-strip">
+            <div class="loading">Loading weather data...</div>
+        </div>
+    </div>
 
-<div id="watering-plans">
-    <div class="loading">Loading watering plans...</div>
+    <!-- Watering Plan -->
+    <div class="forecast-section" id="watering-section" style="display:none;">
+        <h2 class="forecast-section-title">
+            <span class="material-icons-outlined">water_drop</span>
+            Watering Schedule
+        </h2>
+        <div id="watering-plans"></div>
+    </div>
 </div>
 {% endblock %}
 
