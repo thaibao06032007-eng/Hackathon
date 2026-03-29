@@ -14,6 +14,11 @@
 
 <img src="https://img.icons8.com/color/200/potted-plant.png" alt="Plant Monitor" width="150"/>
 
+<p align="center">
+  <img src="plant-setup.jpg" alt="Smart Plant Monitor setup" width="400"/>
+  <img src="plant-closeup.jpg" alt="Soil sensor and watering tube closeup" width="400"/>
+</p>
+
 **Real-time monitoring of temperature, soil & air humidity.**  
 **Auto-waters plants when soil is dry. AI-powered plant identification.**
 
