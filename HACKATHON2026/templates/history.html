@@ -1,64 +1,87 @@
 {% extends 'base.html' %}
 
-{% block title %}History - Plant Monitor{% endblock %}
+{% block title %}Notifications - Plant Monitor{% endblock %}
 
 {% block head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <h1>Sensor History</h1>
-</div>
+<div class="notif-page">
+    <!-- Hero -->
+    <div class="notif-hero">
+        <h1 class="notif-title">
+            <span class="material-icons-outlined notif-title-icon">chat</span>
+            Plant Notifications
+        </h1>
+    </div>
 
-<div class="history-controls">
-    <select id="plant-select" class="select">
-        <option value="">Select a plant...</option>
-    </select>
-    <select id="time-range" class="select">
-        <option value="6">Last 6 Hours</option>
-        <option value="24" selected>Last 24 Hours</option>
-        <option value="72">Last 3 Days</option>
-        <option value="168">Last 7 Days</option>
-        <option value="720">Last 30 Days</option>
-    </select>
-</div>
-
-<div class="charts-container">
-    <div class="card">
-        <h2>Soil Humidity (%)</h2>
-        <div class="chart-wrapper">
-            <canvas id="humidity-chart"></canvas>
+    <!-- Plant Chat Selector -->
+    <div class="notif-contacts-card">
+        <div class="notif-contacts-header">
+            <span class="material-icons-outlined">forum</span>
+            <span class="notif-contacts-title">Conversations</span>
+        </div>
+        <div id="plant-contacts" class="notif-contacts-list">
+            <div class="loading">Loading plants...</div>
         </div>
     </div>
-    <div class="card">
-        <h2>Temperature (&deg;C)</h2>
-        <div class="chart-wrapper">
-            <canvas id="temp-chart"></canvas>
-        </div>
-    </div>
-    <div class="card">
-        <h2>Light Level (lux)</h2>
-        <div class="chart-wrapper">
-            <canvas id="light-chart"></canvas>
-        </div>
-    </div>
-</div>
 
-<div class="card">
-    <h2>Watering Events</h2>
-    <table id="water-table" class="data-table">
-        <thead>
-            <tr>
-                <th>Date &amp; Time</th>
-                <th>Duration</th>
-                <th>Triggered By</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td colspan="3" class="empty-message">Select a plant to view history</td></tr>
-        </tbody>
-    </table>
+    <!-- Chat Area -->
+    <div class="notif-chat-area" id="chat-area" style="display:none;">
+        <!-- Chat Header -->
+        <div class="notif-chat-header" id="chat-header">
+            <div class="notif-chat-avatar" id="chat-avatar">
+                <span class="material-icons-outlined">eco</span>
+            </div>
+            <div class="notif-chat-header-info">
+                <span class="notif-chat-name" id="chat-name">Plant</span>
+                <span class="notif-chat-status" id="chat-status">Online</span>
+            </div>
+            <div class="notif-chat-health-badge" id="chat-health-badge"></div>
+        </div>
+
+        <!-- Messages -->
+        <div class="notif-messages" id="chat-messages">
+            <div class="loading">Loading messages...</div>
+        </div>
+    </div>
+
+    <!-- Data Panel (mini charts + water table) -->
+    <div class="notif-data-panel" id="data-panel" style="display:none;">
+        <div class="notif-data-row">
+            <div class="notif-mini-chart-card">
+                <h3 class="notif-data-title">
+                    <span class="material-icons-outlined">water_drop</span>
+                    Soil Humidity (6h)
+                </h3>
+                <div class="notif-chart-wrap"><canvas id="mini-humidity-chart"></canvas></div>
+            </div>
+            <div class="notif-mini-chart-card">
+                <h3 class="notif-data-title">
+                    <span class="material-icons-outlined">thermostat</span>
+                    Temperature (6h)
+                </h3>
+                <div class="notif-chart-wrap"><canvas id="mini-temp-chart"></canvas></div>
+            </div>
+        </div>
+        <div class="notif-water-table-card">
+            <h3 class="notif-data-title">
+                <span class="material-icons-outlined">opacity</span>
+                Recent Watering
+            </h3>
+            <table class="notif-water-table" id="notif-water-table">
+                <thead>
+                    <tr><th>Time</th><th>Duration</th><th>Trigger</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td colspan="3" class="empty-message">No recent events</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}
 

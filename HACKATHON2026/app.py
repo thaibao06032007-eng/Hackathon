@@ -4,6 +4,7 @@ import database as db
 from config import is_valid_local_ip, PERENUAL_API_KEY
 import threading
 import time
+import random
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
@@ -220,6 +221,250 @@ def api_auto_water(plant_id):
             return jsonify({'error': 'ESP32 returned an error'}), 502
     except http_requests.exceptions.RequestException as e:
         return jsonify({'error': f'Could not reach ESP32: {str(e)}'}), 503
+
+
+# ==================== API: Chat Notifications ====================
+
+PLANT_CHAT_MESSAGES = {
+    'soil_dry_critical': [
+        "Help! My soil is SO dry right now ({value:.0f}%)... I'm really thirsty! Can you water me please? 🥺",
+        "Owner, my roots are parched! Soil is only at {value:.0f}%. I need water urgently! 💧",
+        "SOS! Dry soil alert at {value:.0f}%! A good drink would save my day 🌵",
+    ],
+    'soil_dry': [
+        "Hey, my soil is getting a bit dry ({value:.0f}%). A little water would be lovely! 😊",
+        "Just a friendly reminder — my soil is at {value:.0f}%. Getting thirsty over here! 🙂",
+        "My feet are drying out ({value:.0f}% humidity). Mind giving me a splash? 💦",
+    ],
+    'soil_wet': [
+        "Whoa, that's a lot of water! My soil is at {value:.0f}%. Let me drain a bit first 💧",
+        "I'm swimming here! Soil at {value:.0f}%. Maybe hold off on watering for now 🏊",
+        "Too much water alert! {value:.0f}% humidity — I might get root rot! 😰",
+    ],
+    'soil_good': [
+        "My soil feels perfect right now at {value:.0f}%! Thanks for taking great care of me 🌱",
+        "Soil humidity is just right ({value:.0f}%). I'm one happy plant! 😄",
+    ],
+    'temp_hot': [
+        "It's {value:.0f}°C — way too hot! Please move me somewhere cooler or give me shade 🔥",
+        "I'm overheating at {value:.0f}°C! Make sure I'm not in direct sun ☀️🥵",
+        "Temperature hit {value:.0f}°C! This is scorching! Help me cool down! 🌡️",
+    ],
+    'temp_cold': [
+        "Brrr! It's {value:.0f}°C — that's quite cold for me. Can I go somewhere warmer? 🥶",
+        "I'm shivering at {value:.0f}°C! Please keep me away from drafts ❄️",
+    ],
+    'temp_good': [
+        "Temperature is a comfy {value:.0f}°C. I'm feeling great! 🌤️",
+    ],
+    'light_low': [
+        "It's pretty dark where I am ({value:.0f} lux). I could use more sunshine! 🌑",
+        "Not enough light ({value:.0f} lux)! Can you move me closer to a window? 🪟",
+    ],
+    'light_high': [
+        "The light is super intense ({value:.0f} lux)! A little shade would be nice 😎",
+        "Too bright! {value:.0f} lux is scorching my leaves. Sunglasses needed! 🕶️",
+    ],
+    'light_good': [
+        "Lighting is perfect at {value:.0f} lux! Photosynthesis mode ON ☀️🌿",
+    ],
+    'watered_recently': [
+        "Thanks for watering me! That {duration}s drink was refreshing 💙",
+        "Ahh, {duration}s of water — just what I needed! You're the best owner! 🌷",
+    ],
+    'health_critical': [
+        "I'm not doing well at all... My health score is only {score}. Please check on me! 😢",
+        "CRITICAL: Health at {score}/100. I need urgent attention! 🚨",
+    ],
+    'health_attention': [
+        "I'm hanging in there, but my health score is {score}. Could use some help 🤔",
+        "Not my best day — score {score}/100. Let's fix some issues together 🩹",
+    ],
+    'health_good': [
+        "I'm feeling amazing! Health score: {score}/100! Keep it up! 🌟",
+        "Thriving over here! Score {score}. Life is good 🌻",
+    ],
+    'weather_rain': [
+        "Looks like rain today ({precip:.1f}mm)! No need to water me — nature's got it covered ☔",
+        "Rain is coming ({precip:.1f}mm)! Save some water — the sky will handle it 🌧️",
+    ],
+    'weather_hot_day': [
+        "Weather forecast says {temp:.0f}°C today — that's hot! Extra water would help 🥤",
+    ],
+    'weather_uv_high': [
+        "UV index is {uv:.0f} today — very strong! Make sure I have some shade 🧴",
+    ],
+    'greeting_morning': [
+        "Good morning! Ready for a new day of growing 🌅",
+        "Rise and shine! Let's make today a great growing day! ☀️",
+    ],
+    'greeting_night': [
+        "Good night! I'll be resting my leaves now 🌙",
+    ],
+}
+
+
+def generate_chat_messages(plant, sensor_data, health, weather_today=None, water_events=None):
+    """Generate natural-language chat messages from sensor data."""
+    messages = []
+    now = datetime.now()
+    plant_name = plant.get('name', 'My Plant')
+
+    def pick(key, **kwargs):
+        templates = PLANT_CHAT_MESSAGES.get(key, [])
+        if not templates:
+            return None
+        msg = random.choice(templates).format(**kwargs)
+        return msg
+
+    # Time-based greeting
+    hour = now.hour
+    if 5 <= hour < 12:
+        messages.append({
+            'type': 'greeting', 'priority': 0,
+            'text': pick('greeting_morning'),
+            'time': now.strftime('%H:%M'),
+            'icon': 'wb_sunny'
+        })
+    elif hour >= 22 or hour < 5:
+        messages.append({
+            'type': 'greeting', 'priority': 0,
+            'text': pick('greeting_night'),
+            'time': now.strftime('%H:%M'),
+            'icon': 'nightlight'
+        })
+
+    if sensor_data:
+        ts = sensor_data.get('recorded_at', now.strftime('%Y-%m-%d %H:%M:%S'))
+        try:
+            data_time = datetime.strptime(ts, '%Y-%m-%d %H:%M:%S')
+        except (ValueError, TypeError):
+            data_time = now
+        time_str = data_time.strftime('%H:%M')
+
+        # Soil humidity
+        soil = sensor_data.get('soil_humidity')
+        if soil is not None:
+            soil_min = plant.get('ideal_soil_humidity_min', 30)
+            soil_max = plant.get('ideal_soil_humidity_max', 70)
+            if soil < soil_min * 0.5:
+                messages.append({'type': 'alert', 'priority': 3, 'text': pick('soil_dry_critical', value=soil), 'time': time_str, 'icon': 'water_drop'})
+            elif soil < soil_min:
+                messages.append({'type': 'warning', 'priority': 2, 'text': pick('soil_dry', value=soil), 'time': time_str, 'icon': 'water_drop'})
+            elif soil > soil_max:
+                messages.append({'type': 'warning', 'priority': 2, 'text': pick('soil_wet', value=soil), 'time': time_str, 'icon': 'water_drop'})
+            else:
+                messages.append({'type': 'good', 'priority': 0, 'text': pick('soil_good', value=soil), 'time': time_str, 'icon': 'grass'})
+
+        # Temperature
+        temp = sensor_data.get('temperature')
+        if temp is not None:
+            temp_min = plant.get('ideal_temperature_min', 18)
+            temp_max = plant.get('ideal_temperature_max', 30)
+            if temp > temp_max:
+                messages.append({'type': 'warning', 'priority': 2, 'text': pick('temp_hot', value=temp), 'time': time_str, 'icon': 'thermostat'})
+            elif temp < temp_min:
+                messages.append({'type': 'warning', 'priority': 2, 'text': pick('temp_cold', value=temp), 'time': time_str, 'icon': 'thermostat'})
+            else:
+                messages.append({'type': 'good', 'priority': 0, 'text': pick('temp_good', value=temp), 'time': time_str, 'icon': 'thermostat'})
+
+        # Light
+        light = sensor_data.get('light_level')
+        if light is not None:
+            light_min = plant.get('ideal_light_min', 200)
+            light_max = plant.get('ideal_light_max', 800)
+            if light < light_min:
+                messages.append({'type': 'warning', 'priority': 1, 'text': pick('light_low', value=light), 'time': time_str, 'icon': 'light_mode'})
+            elif light > light_max:
+                messages.append({'type': 'warning', 'priority': 1, 'text': pick('light_high', value=light), 'time': time_str, 'icon': 'light_mode'})
+            else:
+                messages.append({'type': 'good', 'priority': 0, 'text': pick('light_good', value=light), 'time': time_str, 'icon': 'light_mode'})
+
+    # Health score
+    if health and health.get('score') is not None:
+        score = health['score']
+        if score < 40:
+            messages.append({'type': 'alert', 'priority': 3, 'text': pick('health_critical', score=score), 'time': now.strftime('%H:%M'), 'icon': 'favorite'})
+        elif score < 70:
+            messages.append({'type': 'warning', 'priority': 2, 'text': pick('health_attention', score=score), 'time': now.strftime('%H:%M'), 'icon': 'favorite'})
+        else:
+            messages.append({'type': 'good', 'priority': 0, 'text': pick('health_good', score=score), 'time': now.strftime('%H:%M'), 'icon': 'favorite'})
+
+    # Recent watering events
+    if water_events:
+        latest_water = water_events[0]
+        messages.append({
+            'type': 'info', 'priority': 1,
+            'text': pick('watered_recently', duration=latest_water['duration_seconds']),
+            'time': latest_water.get('recorded_at', '')[-8:-3] if latest_water.get('recorded_at') else now.strftime('%H:%M'),
+            'icon': 'opacity'
+        })
+
+    # Weather-based messages
+    if weather_today:
+        precip = weather_today.get('precipitation', 0) or 0
+        temp_max = weather_today.get('temp_max')
+        uv = weather_today.get('uv_index', 0) or 0
+
+        if precip > 3:
+            messages.append({'type': 'info', 'priority': 1, 'text': pick('weather_rain', precip=precip), 'time': now.strftime('%H:%M'), 'icon': 'cloud'})
+        if temp_max and temp_max > 35:
+            messages.append({'type': 'warning', 'priority': 2, 'text': pick('weather_hot_day', temp=temp_max), 'time': now.strftime('%H:%M'), 'icon': 'wb_sunny'})
+        if uv > 8:
+            messages.append({'type': 'warning', 'priority': 2, 'text': pick('weather_uv_high', uv=uv), 'time': now.strftime('%H:%M'), 'icon': 'wb_sunny'})
+
+    # Sort: alerts first, then warnings, then good
+    messages.sort(key=lambda m: -m['priority'])
+
+    return messages
+
+
+@app.route('/api/plants/<int:plant_id>/chat', methods=['GET'])
+def api_plant_chat(plant_id):
+    """Generate chat-style notification messages for a plant."""
+    plant = db.get_plant(plant_id)
+    if not plant:
+        return jsonify({'error': 'Plant not found'}), 404
+
+    sensor_data = db.get_latest_sensor_data(plant_id)
+    health = db.predict_health(plant_id)
+    water_events = db.get_water_history(plant_id, hours=24)
+    sensor_history = db.get_sensor_history(plant_id, hours=6)
+
+    # Try to get today's weather
+    weather_today = None
+    try:
+        resp = http_requests.get(OPEN_METEO_URL, params={
+            'latitude': 16.0544, 'longitude': 108.2022,
+            'daily': 'temperature_2m_max,precipitation_sum,uv_index_max',
+            'timezone': 'auto', 'forecast_days': 1
+        }, timeout=5)
+        if resp.status_code == 200:
+            w = resp.json().get('daily', {})
+            weather_today = {
+                'temp_max': (w.get('temperature_2m_max') or [None])[0],
+                'precipitation': (w.get('precipitation_sum') or [0])[0],
+                'uv_index': (w.get('uv_index_max') or [0])[0],
+            }
+    except Exception:
+        pass
+
+    messages = generate_chat_messages(
+        plant, sensor_data, health,
+        weather_today=weather_today,
+        water_events=water_events
+    )
+
+    return jsonify({
+        'plant_id': plant_id,
+        'plant_name': plant['name'],
+        'species': plant.get('species', ''),
+        'messages': messages,
+        'sensor_data': sensor_data,
+        'health': health,
+        'sensor_history': sensor_history,
+        'water_events': water_events[:5] if water_events else []
+    })
 
 
 # ==================== API: Forecast & Watering Plan ====================
