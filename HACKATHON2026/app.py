@@ -194,6 +194,34 @@ def api_water_plant(plant_id):
         return jsonify({'error': f'Could not reach ESP32: {str(e)}'}), 503
 
 
+# ==================== API: Auto-Water Toggle ====================
+
+@app.route('/api/plants/<int:plant_id>/auto-water', methods=['POST'])
+def api_auto_water(plant_id):
+    plant = db.get_plant(plant_id)
+    if not plant:
+        return jsonify({'error': 'Plant not found'}), 404
+
+    if not plant['esp32_ip'] or not is_valid_local_ip(plant['esp32_ip']):
+        return jsonify({'error': 'No valid ESP32 IP configured'}), 400
+
+    data = request.get_json(silent=True) or {}
+    enabled = data.get('enabled', False)
+
+    try:
+        resp = http_requests.get(
+            f"http://{plant['esp32_ip']}/auto-water",
+            params={'enabled': 'true' if enabled else 'false'},
+            timeout=5
+        )
+        if resp.status_code == 200:
+            return jsonify(resp.json())
+        else:
+            return jsonify({'error': 'ESP32 returned an error'}), 502
+    except http_requests.exceptions.RequestException as e:
+        return jsonify({'error': f'Could not reach ESP32: {str(e)}'}), 503
+
+
 # ==================== API: Forecast & Watering Plan ====================
 
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"

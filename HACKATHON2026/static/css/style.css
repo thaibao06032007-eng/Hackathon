@@ -457,6 +457,37 @@ body {
 }
 
 /* Controls Card */
+.auto-water-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    margin-bottom: 16px;
+}
+
+.toggle-status {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--success);
+}
+
+.water-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.water-controls .select {
+    flex: 0 0 auto;
+}
+
+.water-controls .btn-water {
+    flex: 1;
+    margin-top: 0;
+}
+
 .water-status {
     margin-top: 12px;
     padding: 8px;

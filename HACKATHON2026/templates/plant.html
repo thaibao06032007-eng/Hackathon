@@ -60,10 +60,27 @@
     <!-- Controls -->
     <div class="card controls-card">
         <h2>Controls</h2>
-        <button id="water-btn" class="btn btn-water">
-            <span class="material-icons-outlined">water</span>
-            Water Plant
-        </button>
+        <div class="auto-water-toggle">
+            <label class="toggle-label">
+                <input type="checkbox" id="auto-water-toggle">
+                Auto-Watering
+            </label>
+            <span id="auto-water-status" class="toggle-status">--</span>
+        </div>
+        <div class="water-controls">
+            <select id="water-duration" class="select">
+                <option value="3">3 seconds</option>
+                <option value="5" selected>5 seconds</option>
+                <option value="10">10 seconds</option>
+                <option value="15">15 seconds</option>
+                <option value="30">30 seconds</option>
+                <option value="60">60 seconds</option>
+            </select>
+            <button id="water-btn" class="btn btn-water">
+                <span class="material-icons-outlined">water</span>
+                Water Plant
+            </button>
+        </div>
         <div id="water-status" class="water-status"></div>
         <div class="last-watered">
             <span>Last watered:</span>

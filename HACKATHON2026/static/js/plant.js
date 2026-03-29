@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('show-future').addEventListener('change', (e) => {
         updatePlant3D(e.target.checked);
     });
+    document.getElementById('auto-water-toggle').addEventListener('change', toggleAutoWater);
 
     // Auto-refresh every 15 seconds
     setInterval(loadPlantData, 15000);
@@ -24,6 +25,19 @@ async function loadPlantData() {
         const history = await API.getHistory(PLANT_ID, 24);
         updateMiniChart(history.sensor_data);
         updateLastWatered(history.water_events);
+
+        // Sync auto-water toggle with actual ESP32 state
+        try {
+            const resp = await fetch(`/api/plants/${PLANT_ID}/esp-status`);
+            if (resp.ok) {
+                const espStatus = await resp.json();
+                const toggle = document.getElementById('auto-water-toggle');
+                const statusEl = document.getElementById('auto-water-status');
+                toggle.checked = espStatus.auto_water;
+                statusEl.textContent = espStatus.auto_water ? 'ON' : 'OFF';
+                statusEl.style.color = espStatus.auto_water ? 'var(--success)' : 'var(--danger)';
+            }
+        } catch (e) { /* ESP32 unreachable, leave toggle as-is */ }
     } catch (error) {
         console.error('Error loading plant data:', error);
     }
@@ -167,13 +181,14 @@ function updateLastWatered(waterEvents) {
 async function waterPlant() {
     const btn = document.getElementById('water-btn');
     const status = document.getElementById('water-status');
+    const duration = parseInt(document.getElementById('water-duration').value);
 
     btn.disabled = true;
     btn.innerHTML = '<span class="material-icons-outlined">hourglass_empty</span> Watering...';
     status.textContent = '';
 
     try {
-        const result = await API.waterPlant(PLANT_ID);
+        const result = await API.waterPlant(PLANT_ID, duration);
         status.textContent = result.message;
         status.style.background = 'var(--success-light)';
         status.style.color = 'var(--success)';
@@ -188,6 +203,34 @@ async function waterPlant() {
             status.textContent = '';
             status.style.background = '';
         }, 5000);
+    }
+}
+
+async function toggleAutoWater() {
+    const toggle = document.getElementById('auto-water-toggle');
+    const statusEl = document.getElementById('auto-water-status');
+    const enabled = toggle.checked;
+
+    try {
+        const plant = await API.getPlant(PLANT_ID);
+        const ip = plant.esp32_ip;
+        if (!ip) throw new Error('No ESP32 IP configured');
+
+        const resp = await fetch(`/api/plants/${PLANT_ID}/auto-water`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ enabled })
+        });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({ error: 'Failed' }));
+            throw new Error(err.error || 'Failed');
+        }
+        statusEl.textContent = enabled ? 'ON' : 'OFF';
+        statusEl.style.color = enabled ? 'var(--success)' : 'var(--danger)';
+    } catch (error) {
+        // Revert toggle on failure
+        toggle.checked = !enabled;
+        alert('Failed to toggle auto-water: ' + error.message);
     }
 }
 

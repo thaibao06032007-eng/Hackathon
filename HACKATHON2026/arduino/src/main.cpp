@@ -12,6 +12,7 @@
  */
 
 #include <Arduino.h>
+#include <Ticker.h>
 #include <WiFi.h>
 #include <WebServer.h>
 #include <HTTPClient.h>
@@ -19,15 +20,13 @@
 #include "DHT.h"
 
 // ==========================================
-// 1. WIFI ACCESS POINT SETTINGS
+// 1. WIFI SETTINGS (CHANGE THESE!)
 // ==========================================
-// ESP32 creates its own WiFi network.
-// Connect your PC to this network, then open http://192.168.4.1
-const char* ap_ssid = "PlantMonitor";
-const char* ap_password = "plant1234";
+const char* ssid = "Galaxy Z Fold6 200A";
+const char* password = "c8j2p3dx36isnmk";
 
-// Flask backend — disabled in AP mode (Flask will poll ESP32 instead)
-// const char* SERVER_URL = "http://192.168.4.x:5000/api/sensor-data";
+// Flask backend server address (your PC's local IP)
+const char* SERVER_URL = "http://10.175.88.221:5000/api/sensor-data";
 
 // Plant ID — must match the plant ID in the web app settings
 const int PLANT_ID = 1;
@@ -64,6 +63,8 @@ void checkPump();
 void handleRoot();
 void handleWater();
 void handleStatus();
+void handleAutoWater();
+void handleDebug();
 
 // ==================== GLOBALS ====================
 WebServer server(80);
@@ -77,6 +78,12 @@ float lastAirHumidity    = 0;   // % from DHT11
 bool pumpRunning = false;
 unsigned long pumpStartTime = 0;
 unsigned long pumpDuration = 0;
+
+// Hardware safety timer — guaranteed pump shutoff
+Ticker pumpSafetyTimer;
+
+// Auto-watering toggle (can be changed via /auto-water endpoint)
+bool autoWaterEnabled = false;
 
 // ==================== SETUP ====================
 void setup() {
@@ -95,27 +102,30 @@ void setup() {
   
   // --- INITIALIZE RELAY & SENSORS ---
   pinMode(relayPin, OUTPUT);
-  digitalWrite(relayPin, HIGH); // Turn pump OFF initially (active LOW)
+  digitalWrite(relayPin, LOW); // Turn pump OFF initially (active HIGH)
   dht.begin(); 
   
-  // --- START WIFI ACCESS POINT ---
+  // --- CONNECT TO WIFI ---
   Serial.println();
-  Serial.println("Starting WiFi Access Point...");
-  WiFi.mode(WIFI_AP);
-  WiFi.softAP(ap_ssid, ap_password);
-  delay(100);  // Brief delay for AP to stabilize
+  Serial.print("Connecting to WiFi: ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
   
-  Serial.println("=> Access Point Started!");
-  Serial.print("=> SSID: ");
-  Serial.println(ap_ssid);
-  Serial.print("=> ESP32 IP: ");
-  Serial.println(WiFi.softAPIP());
-  Serial.println("=> Connect your PC to this WiFi network");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  Serial.println("\n=> WiFi Connected!");
+  Serial.print("=> ESP32 IP Address: ");
+  Serial.println(WiFi.localIP());
 
   // Setup HTTP server endpoints
   server.on("/", handleRoot);
   server.on("/water", handleWater);
   server.on("/status", handleStatus);
+  server.on("/auto-water", handleAutoWater);
+  server.on("/debug", handleDebug);
   server.begin();
   Serial.println("HTTP server started on port 80");
   Serial.println("--- ESP32 SMART WATERING SYSTEM STARTING ---");
@@ -160,43 +170,103 @@ void loop() {
     Serial.println(sensorValue);
 
     // 3. AUTO-WATER IF DRY (non-blocking)
-    if (sensorValue > threshold && !pumpRunning) {
+    if (autoWaterEnabled && sensorValue > threshold && !pumpRunning) {
       Serial.println("=> Status: DRY! Starting pump for 10s...");
       startPump(10000);
     } else if (!pumpRunning) {
-      Serial.println("=> Status: MOIST. No pumping needed.");
+      Serial.println(autoWaterEnabled ? "=> Status: MOIST. No pumping needed." : "=> Auto-water DISABLED.");
     }
 
-    // 4. In AP mode, Flask polls ESP32 via /status — no push needed
-    // sendSensorData();
+    // 4. SEND DATA TO FLASK BACKEND (skip while pump is running to avoid blocking)
+    if (!pumpRunning) {
+        sendSensorData();
+    } else {
+        Serial.println("Pump running — skipping HTTP send.");
+    }
 
     Serial.println("------------------------------------");
   }
 }
 
 // ==================== NON-BLOCKING PUMP CONTROL ====================
+// Ticker callback — runs independently, guaranteed to fire
+void pumpSafetyOff() {
+    digitalWrite(relayPin, LOW);  // Pump OFF (active HIGH)
+    pumpRunning = false;
+    Serial.println("=> Timer: Pump OFF.");
+}
+
 void startPump(unsigned long durationMs) {
     if (pumpRunning) return;  // Already running
     pumpRunning = true;
     pumpStartTime = millis();
     pumpDuration = durationMs;
-    digitalWrite(relayPin, LOW);  // Pump ON (active LOW)
+    digitalWrite(relayPin, HIGH);  // Pump ON (active HIGH)
+    // Set hardware timer to guarantee shutoff
+    pumpSafetyTimer.once_ms(durationMs + 500, pumpSafetyOff);
     Serial.printf("Pump ON for %lu ms\n", durationMs);
+}
+
+void forceStartPump(unsigned long durationMs) {
+    // Cancel any existing safety timer
+    pumpSafetyTimer.detach();
+    // Start fresh
+    pumpRunning = true;
+    pumpStartTime = millis();
+    pumpDuration = durationMs;
+    digitalWrite(relayPin, HIGH);  // Pump ON (active HIGH)
+    // Set hardware timer to guarantee shutoff
+    pumpSafetyTimer.once_ms(durationMs + 500, pumpSafetyOff);
+    Serial.printf("Pump FORCE ON for %lu ms\n", durationMs);
 }
 
 void checkPump() {
     if (pumpRunning && (millis() - pumpStartTime >= pumpDuration)) {
-        digitalWrite(relayPin, HIGH);  // Pump OFF
+        digitalWrite(relayPin, LOW);  // Pump OFF (active HIGH)
         pumpRunning = false;
         Serial.println("=> Done pumping. Turning off.");
+    }
+    // Safety: if pump is not supposed to be running, ensure relay is OFF
+    if (!pumpRunning) {
+        digitalWrite(relayPin, LOW);
+    }
+    // Hard safety limit: never run pump longer than 65 seconds
+    if (pumpRunning && (millis() - pumpStartTime >= 65000)) {
+        digitalWrite(relayPin, LOW);
+        pumpRunning = false;
+        Serial.println("=> SAFETY: Pump exceeded max time. Forced OFF.");
     }
 }
 
 // ==================== SEND DATA TO BACKEND ====================
-// In AP mode, Flask polls the ESP32 /status endpoint instead.
-// Keeping function stub in case station mode is re-enabled later.
 void sendSensorData() {
-    // Disabled in AP mode — no outbound connection available
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("WiFi disconnected, skipping data send.");
+        return;
+    }
+
+    HTTPClient http;
+    http.begin(SERVER_URL);
+    http.addHeader("Content-Type", "application/json");
+    http.setTimeout(2000);
+
+    // Build JSON payload
+    JsonDocument doc;
+    doc["plant_id"]       = PLANT_ID;
+    doc["soil_humidity"]  = round(lastSoilPercent * 10) / 10.0;
+    doc["temperature"]    = round(lastTemperature * 10) / 10.0;
+    doc["air_humidity"]   = round(lastAirHumidity * 10) / 10.0;
+
+    String json;
+    serializeJson(doc, json);
+
+    int httpCode = http.POST(json);
+    if (httpCode > 0) {
+        Serial.printf("Data sent -> HTTP %d\n", httpCode);
+    } else {
+        Serial.printf("Send failed: %s\n", http.errorToString(httpCode).c_str());
+    }
+    http.end();
 }
 
 // ==================== HTTP HANDLERS ====================
@@ -216,6 +286,7 @@ void handleRoot() {
     html += "<div class='reading'>Soil Moisture: <strong>" + String(lastSoilPercent, 1) + "% (raw: " + String((int)lastSoilRaw) + ")</strong></div>";
     html += "<div class='reading'>Temperature: <strong>" + String(lastTemperature, 1) + " &deg;C</strong></div>";
     html += "<div class='reading'>Air Humidity: <strong>" + String(lastAirHumidity, 1) + " %</strong></div>";
+    html += "<div class='reading'>Auto-Water: <strong>" + String(autoWaterEnabled ? "ON" : "OFF") + "</strong></div>";
     html += "<a href='/water?duration=5'>Water Plant (5s)</a>";
     html += "</body></html>";
     server.send(200, "text/html", html);
@@ -232,8 +303,8 @@ void handleWater() {
 
     Serial.printf("Activating water pump for %d seconds (non-blocking)\n", duration);
 
-    // Start pump using non-blocking helper
-    startPump((unsigned long)duration * 1000);
+    // Start pump using non-blocking helper (override any auto-water cycle)
+    forceStartPump((unsigned long)duration * 1000);
 
     // Respond immediately with JSON
     String response = "{\"status\":\"ok\",\"duration\":" + String(duration) + ",\"pump_running\":true}";
@@ -248,7 +319,8 @@ void handleStatus() {
     doc["soil_raw"]       = (int)lastSoilRaw;
     doc["temperature"]    = lastTemperature;
     doc["air_humidity"]   = lastAirHumidity;
-    doc["light_level"]    = 0;
+    doc["pump_running"]   = pumpRunning;
+    doc["auto_water"]     = autoWaterEnabled;
     doc["uptime_seconds"] = millis() / 1000;
     doc["wifi_rssi"]      = WiFi.RSSI();
     doc["free_heap"]      = ESP.getFreeHeap();
@@ -256,4 +328,99 @@ void handleStatus() {
     String json;
     serializeJson(doc, json);
     server.send(200, "application/json", json);
+}
+
+// ==================== DEBUG: RAW GPIO RELAY TEST ====================
+void handleDebug() {
+    String action = "";
+    if (server.hasArg("action")) action = server.arg("action");
+
+    String result = "";
+
+    if (action == "relay_on") {
+        // Bypass ALL pump logic — raw GPIO HIGH = relay ON (active HIGH)
+        pumpSafetyTimer.detach();
+        pumpRunning = false;
+        digitalWrite(relayPin, HIGH);
+        result = "RELAY PIN SET HIGH (pump should be ON). If pump does NOT run = CIRCUIT issue.";
+        Serial.println("DEBUG: relayPin -> HIGH (raw ON)");
+    }
+    else if (action == "relay_off") {
+        // Bypass ALL pump logic — raw GPIO LOW = relay OFF (active HIGH)
+        pumpSafetyTimer.detach();
+        pumpRunning = false;
+        digitalWrite(relayPin, LOW);
+        result = "RELAY PIN SET LOW (pump should be OFF). If pump does NOT stop = CIRCUIT issue.";
+        Serial.println("DEBUG: relayPin -> LOW (raw OFF)");
+    }
+    else if (action == "timed_test") {
+        // Raw 3-second test: no startPump, no checkPump, just direct GPIO + delay
+        pumpSafetyTimer.detach();
+        pumpRunning = false;
+        Serial.println("DEBUG: Starting raw 3s timed test...");
+        unsigned long t0 = millis();
+        digitalWrite(relayPin, HIGH);
+        delay(3000);  // Intentionally blocking — pure hardware test
+        digitalWrite(relayPin, LOW);
+        unsigned long elapsed = millis() - t0;
+        result = "Raw 3s test done. Actual elapsed: " + String(elapsed) + " ms. If pump ran ~3s = circuit OK, code issue. If not = circuit issue.";
+        Serial.printf("DEBUG: Raw 3s test done in %lu ms\n", elapsed);
+    }
+    else if (action == "managed_test") {
+        // Use forceStartPump — tests the software timer path
+        forceStartPump(3000);
+        result = "forceStartPump(3000) called. Watch serial monitor. Pump should stop in ~3s via checkPump() + Ticker safety at 3.5s.";
+    }
+    else if (action == "read_pin") {
+        int pinState = digitalRead(relayPin);
+        result = "relayPin (" + String(relayPin) + ") reads: " + String(pinState) + " (HIGH=1=OFF, LOW=0=ON). pumpRunning=" + String(pumpRunning);
+        Serial.printf("DEBUG: relayPin=%d, pumpRunning=%d\n", pinState, pumpRunning);
+    }
+    else {
+        // Serve the debug page
+        String html = "<!DOCTYPE html><html><head>";
+        html += "<meta charset='UTF-8'><meta name='viewport' content='width=device-width,initial-scale=1.0'>";
+        html += "<title>Debug: Relay Test</title>";
+        html += "<style>";
+        html += "body{font-family:monospace;max-width:500px;margin:30px auto;padding:0 15px;background:#1a1a2e;color:#e0e0e0;}";
+        html += "h1{color:#ff6b6b;font-size:1.3em;}";
+        html += ".btn{display:block;width:100%;padding:14px;margin:8px 0;border:none;border-radius:6px;font-size:1em;font-family:monospace;cursor:pointer;}";
+        html += ".on{background:#e63946;color:#fff;} .off{background:#2d6a4f;color:#fff;}";
+        html += ".test{background:#0288d1;color:#fff;} .managed{background:#f4a261;color:#000;}";
+        html += ".read{background:#6c757d;color:#fff;}";
+        html += "#result{margin-top:16px;padding:12px;background:#16213e;border:1px solid #444;border-radius:6px;min-height:40px;white-space:pre-wrap;}";
+        html += ".warn{color:#ff6b6b;font-size:0.85em;margin:12px 0;}";
+        html += "</style></head><body>";
+        html += "<h1>RELAY DEBUG TEST</h1>";
+        html += "<p class='warn'>Pin " + String(relayPin) + " | ACTIVE HIGH (HIGH=ON, LOW=OFF)</p>";
+        html += "<button class='btn on' onclick=\"send('relay_on')\">1. RELAY ON (raw GPIO HIGH)</button>";
+        html += "<button class='btn off' onclick=\"send('relay_off')\">2. RELAY OFF (raw GPIO LOW)</button>";
+        html += "<button class='btn test' onclick=\"send('timed_test')\">3. RAW 3s TEST (blocking delay)</button>";
+        html += "<button class='btn managed' onclick=\"send('managed_test')\">4. MANAGED 3s TEST (forceStartPump)</button>";
+        html += "<button class='btn read' onclick=\"send('read_pin')\">5. READ PIN STATE</button>";
+        html += "<div id='result'>Press a button to test...</div>";
+        html += "<script>";
+        html += "function send(a){document.getElementById('result').textContent='Sending '+a+'...';";
+        html += "fetch('/debug?action='+a).then(r=>r.json()).then(d=>{";
+        html += "document.getElementById('result').textContent=d.result;";
+        html += "}).catch(e=>{document.getElementById('result').textContent='Error: '+e;});}";
+        html += "</script></body></html>";
+        server.send(200, "text/html", html);
+        return;
+    }
+
+    // JSON response for button actions
+    String json = "{\"action\":\"" + action + "\",\"result\":\"" + result + "\"}";
+    server.send(200, "application/json", json);
+}
+
+// Auto-water toggle endpoint
+void handleAutoWater() {
+    if (server.hasArg("enabled")) {
+        String val = server.arg("enabled");
+        autoWaterEnabled = (val == "1" || val == "true");
+        Serial.printf("Auto-water set to: %s\n", autoWaterEnabled ? "ON" : "OFF");
+    }
+    String response = "{\"auto_water\":" + String(autoWaterEnabled ? "true" : "false") + "}";
+    server.send(200, "application/json", response);
 }
